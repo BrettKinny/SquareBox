@@ -25,15 +25,25 @@ verify_checksum() {
 echo "=== TUI Devbox Setup ==="
 echo
 
+# Detect interactive terminal
+INTERACTIVE=false
+[ -t 0 ] && INTERACTIVE=true
+
 # Git identity
 if [ -z "$(git config --global user.name 2>/dev/null)" ]; then
-	read -rp "Git name: " name
-	git config --global user.name "$name"
+	if $INTERACTIVE; then
+		read -rp "Git name: " name
+		git config --global user.name "$name"
+	else
+		echo "Skipping git identity setup (non-interactive)"
+	fi
 fi
 
 if [ -z "$(git config --global user.email 2>/dev/null)" ]; then
-	read -rp "Git email: " email
-	git config --global user.email "$email"
+	if $INTERACTIVE; then
+		read -rp "Git email: " email
+		git config --global user.email "$email"
+	fi
 fi
 
 # Restore GitHub CLI config from persistent storage if available
@@ -45,12 +55,16 @@ fi
 
 # GitHub CLI
 if ! gh auth status &>/dev/null; then
-	echo
-	echo "Logging into GitHub..."
-	BROWSER=echo gh auth login
-	# Persist gh config for future rebuilds
-	mkdir -p "$GH_PERSIST"
-	cp -r ~/.config/gh/* "$GH_PERSIST"/
+	if $INTERACTIVE; then
+		echo
+		echo "Logging into GitHub..."
+		BROWSER=echo gh auth login
+		# Persist gh config for future rebuilds
+		mkdir -p "$GH_PERSIST"
+		cp -r ~/.config/gh/* "$GH_PERSIST"/
+	else
+		echo "Skipping GitHub CLI auth (non-interactive)"
+	fi
 else
 	echo "GitHub CLI: already authenticated"
 fi
@@ -63,18 +77,23 @@ if [ -f "$AI_CONFIG" ]; then
 	ai_choice=$(cat "$AI_CONFIG")
 	echo "Installing AI tool: $ai_choice (from previous selection)"
 else
-	echo
-	echo "Choose your AI coding assistant:"
-	echo "  1) Claude Code"
-	echo "  2) OpenCode"
-	echo "  3) Both"
-	read -rp "Selection [1/2/3]: " selection
-	case "$selection" in
-		1) ai_choice="claude" ;;
-		2) ai_choice="opencode" ;;
-		3) ai_choice="both" ;;
-		*) echo "Invalid selection, defaulting to Claude Code"; ai_choice="claude" ;;
-	esac
+	if $INTERACTIVE; then
+		echo
+		echo "Choose your AI coding assistant:"
+		echo "  1) Claude Code"
+		echo "  2) OpenCode"
+		echo "  3) Both"
+		read -rp "Selection [1/2/3]: " selection
+		case "$selection" in
+			1) ai_choice="claude" ;;
+			2) ai_choice="opencode" ;;
+			3) ai_choice="both" ;;
+			*) echo "Invalid selection, defaulting to Claude Code"; ai_choice="claude" ;;
+		esac
+	else
+		echo "Defaulting to Claude Code (non-interactive)"
+		ai_choice="claude"
+	fi
 	echo "$ai_choice" > "$AI_CONFIG"
 fi
 
@@ -120,25 +139,30 @@ if [ -f "$SDK_CONFIG" ]; then
 	sdk_list=$(cat "$SDK_CONFIG")
 	echo "Installing SDKs: $sdk_list (from previous selection)"
 else
-	echo
-	echo "Select SDKs to install (comma-separated, or 'all', or 'none'):"
-	echo "  1) Node.js"
-	echo "  2) Python"
-	echo "  3) Go"
-	echo "  4) .NET"
-	read -rp "Selection [1,2,3,4/all/none]: " sdk_selection
-	sdk_list=""
-	if [ "$sdk_selection" = "all" ]; then
-		sdk_list="node,python,go,dotnet"
-	elif [ "$sdk_selection" != "none" ] && [ -n "$sdk_selection" ]; then
-		for item in $(echo "$sdk_selection" | tr ',' ' '); do
-			case "$item" in
-				1) sdk_list="${sdk_list:+$sdk_list,}node" ;;
-				2) sdk_list="${sdk_list:+$sdk_list,}python" ;;
-				3) sdk_list="${sdk_list:+$sdk_list,}go" ;;
-				4) sdk_list="${sdk_list:+$sdk_list,}dotnet" ;;
-			esac
-		done
+	if $INTERACTIVE; then
+		echo
+		echo "Select SDKs to install (comma-separated, or 'all', or 'none'):"
+		echo "  1) Node.js"
+		echo "  2) Python"
+		echo "  3) Go"
+		echo "  4) .NET"
+		read -rp "Selection [1,2,3,4/all/none]: " sdk_selection
+		sdk_list=""
+		if [ "$sdk_selection" = "all" ]; then
+			sdk_list="node,python,go,dotnet"
+		elif [ "$sdk_selection" != "none" ] && [ -n "$sdk_selection" ]; then
+			for item in $(echo "$sdk_selection" | tr ',' ' '); do
+				case "$item" in
+					1) sdk_list="${sdk_list:+$sdk_list,}node" ;;
+					2) sdk_list="${sdk_list:+$sdk_list,}python" ;;
+					3) sdk_list="${sdk_list:+$sdk_list,}go" ;;
+					4) sdk_list="${sdk_list:+$sdk_list,}dotnet" ;;
+				esac
+			done
+		fi
+	else
+		echo "Skipping SDK selection (non-interactive)"
+		sdk_list=""
 	fi
 	echo "$sdk_list" > "$SDK_CONFIG"
 fi
