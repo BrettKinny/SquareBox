@@ -93,10 +93,10 @@ The following SDKs are available during first-run setup:
 
 | SDK | Installed via |
 |-----|---------------|
-| Node.js | [nvm](https://github.com/nvm-sh/nvm) (LTS) |
+| Node.js | [nvm](https://github.com/nvm-sh/nvm) |
 | Python | [uv](https://github.com/astral-sh/uv) |
 | Go | [go.dev](https://go.dev) |
-| .NET | [dotnet-install](https://dot.net) (LTS) |
+| .NET | [dotnet-install](https://dot.net) |
 
 Selections are saved to the workspace volume and reused automatically on
 container rebuilds.
