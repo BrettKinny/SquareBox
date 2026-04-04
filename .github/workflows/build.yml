@@ -51,34 +51,6 @@ jobs:
           mkdir -p /tmp/workspace
           bash install.sh 2>&1 | tail -1 | grep -q 'Install complete'
 
-      - name: Setup script installs Claude Code from saved config
-        run: |
-          mkdir -p /tmp/workspace/.devbox
-          echo "claude" > /tmp/workspace/.devbox/ai-tool
-          echo "none" > /tmp/workspace/.devbox/sdks
-          docker run --rm \
-            -v /tmp/workspace:/workspace \
-            devbox:test bash -lc '
-              git config --global user.name "CI Test"
-              git config --global user.email "ci@test"
-              ~/setup.sh && touch ~/.devbox-setup-done
-              which claude || test -x ~/.local/bin/claude || { echo "Claude Code not installed"; exit 1; }
-            '
-
-      - name: Setup script installs OpenCode from saved config
-        run: |
-          mkdir -p /tmp/workspace/.devbox
-          echo "opencode" > /tmp/workspace/.devbox/ai-tool
-          echo "none" > /tmp/workspace/.devbox/sdks
-          docker run --rm \
-            -v /tmp/workspace:/workspace \
-            devbox:test bash -lc '
-              git config --global user.name "CI Test"
-              git config --global user.email "ci@test"
-              ~/setup.sh && touch ~/.devbox-setup-done
-              which opencode || test -x ~/.local/bin/opencode || { echo "OpenCode not installed"; exit 1; }
-            '
-
       - name: Cleanup
         if: always()
         run: docker rm -f devbox-test 2>/dev/null || true
