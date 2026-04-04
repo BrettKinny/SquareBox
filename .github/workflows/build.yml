@@ -59,6 +59,8 @@ jobs:
           docker run --rm \
             -v /tmp/workspace:/workspace \
             devbox:test bash -lc '
+              git config --global user.name "CI Test"
+              git config --global user.email "ci@test"
               ~/setup.sh && touch ~/.devbox-setup-done
               which claude || { echo "Claude Code not installed"; exit 1; }
             '
@@ -71,6 +73,8 @@ jobs:
           docker run --rm \
             -v /tmp/workspace:/workspace \
             devbox:test bash -lc '
+              git config --global user.name "CI Test"
+              git config --global user.email "ci@test"
               ~/setup.sh && touch ~/.devbox-setup-done
               which opencode || { echo "OpenCode not installed"; exit 1; }
             '
