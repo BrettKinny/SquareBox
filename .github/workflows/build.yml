@@ -62,7 +62,7 @@ jobs:
               git config --global user.name "CI Test"
               git config --global user.email "ci@test"
               ~/setup.sh && touch ~/.devbox-setup-done
-              which claude || { echo "Claude Code not installed"; exit 1; }
+              which claude || test -x ~/.local/bin/claude || { echo "Claude Code not installed"; exit 1; }
             '
 
       - name: Setup script installs OpenCode from saved config
@@ -76,7 +76,7 @@ jobs:
               git config --global user.name "CI Test"
               git config --global user.email "ci@test"
               ~/setup.sh && touch ~/.devbox-setup-done
-              which opencode || { echo "OpenCode not installed"; exit 1; }
+              which opencode || test -x ~/.local/bin/opencode || { echo "OpenCode not installed"; exit 1; }
             '
 
       - name: Cleanup
