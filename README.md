@@ -62,13 +62,14 @@ Inspired by [Omarchy](https://omarchy.com).
 | `..` | `cd ..` | Go up one directory |
 | `...` | `cd ../..` | Go up two directories |
 | `....` | `cd ../../..` | Go up three directories |
-| `c` | `opencode` | Launch opencode |
+| `c` | `claude` or `opencode` | Launch selected AI assistant |
 | `g` | `git` | Git shorthand |
 | `gcm` | `git commit -m` | Commit with message |
 | `gcam` | `git commit -a -m` | Stage all and commit |
 | `gcad` | `git commit -a --amend` | Stage all and amend |
 | `lg` | `lazygit` | Launch lazygit |
 | `claude-yolo` | `claude --dangerously-skip-permissions` | Claude without prompts |
+| `opencode-yolo` | `opencode --dangerously-skip-permissions` | OpenCode without prompts |
 
 Install
 -------

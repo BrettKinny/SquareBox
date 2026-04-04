@@ -51,7 +51,7 @@ RUN mkdir -p -m 755 /etc/apt/keyrings \
 
 RUN apt-get update && apt-get install -y --no-install-recommends zstd && rm -rf /var/lib/apt/lists/* \
 	&& ARCH=$(uname -m) \
-	&& if [ "$ARCH" = "aarch64" ]; then ZARCH="aarch64"; LARCH="arm64"; GOARCH="arm64"; OCARCH="arm64"; else ZARCH="x86_64"; LARCH="x86_64"; GOARCH="amd64"; OCARCH="x64"; fi \
+	&& if [ "$ARCH" = "aarch64" ]; then ZARCH="aarch64"; LARCH="arm64"; GOARCH="arm64"; else ZARCH="x86_64"; LARCH="x86_64"; GOARCH="amd64"; fi \
 	# Lazygit
 	&& LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*') \
 	&& curl -fsSLo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_${LARCH}.tar.gz" \
@@ -86,9 +86,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends zstd && rm -rf 
 	&& EDIT_URL=$(curl -s "https://api.github.com/repos/microsoft/edit/releases/latest" | grep -Po '"browser_download_url": "\K[^"]*'"${ZARCH}-linux-gnu"'[^"]*') \
 	&& curl -fsSL "$EDIT_URL" | zstd -d | tar x -C /tmp \
 	&& find /tmp -name 'edit' -type f -executable -exec mv {} /usr/local/bin/edit \; \
-	# OpenCode
-	&& curl -fsSL "https://github.com/anomalyco/opencode/releases/latest/download/opencode-linux-${OCARCH}.tar.gz" | tar xz -C /tmp \
-	&& find /tmp -name 'opencode' -type f -executable -exec mv {} /usr/local/bin/opencode \; \
 	# Purge build-only dependency
 	&& apt-get purge -y --auto-remove zstd && rm -rf /var/lib/apt/lists/*
 
@@ -113,11 +110,7 @@ USER dev
 
 ENV HOME=/home/dev
 
-# 7. Claude Code (install as dev user)
-
-RUN curl -fsSL https://claude.ai/install.sh | bash
-
-# 8. Shell Config
+# 7. Shell Config
 
 RUN cat <<'EOFRC' >> ~/.bashrc
 eval "$(starship init bash)"
@@ -133,8 +126,7 @@ alias eff='$EDITOR "$(ff)"'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
-alias c='opencode'
-alias claude-yolo='claude --dangerously-skip-permissions'
+[ -f ~/.devbox-ai-aliases ] && source ~/.devbox-ai-aliases
 alias g='git'
 alias gcm='git commit -m'
 alias gcam='git commit -a -m'
