@@ -47,10 +47,15 @@ if [ "$ALIASES_ADDED" = true ]; then
 fi
 
 # Create and enter container
-echo "Creating container..."
 mkdir -p ~/.config/git ~/tui-devbox-workspace
-docker run -it --name "$CONTAINER_NAME" \
-	-v ~/tui-devbox-workspace:/workspace \
-	-v ~/.ssh:/home/dev/.ssh:ro \
-	-v ~/.config/git:/home/dev/.config/git \
-	"$IMAGE_NAME"
+
+if [ -t 0 ]; then
+	echo "Creating container..."
+	docker run -it --name "$CONTAINER_NAME" \
+		-v ~/tui-devbox-workspace:/workspace \
+		-v ~/.ssh:/home/dev/.ssh:ro \
+		-v ~/.config/git:/home/dev/.config/git \
+		"$IMAGE_NAME"
+else
+	echo "Install complete. Run 'devbox' to start (you may need to restart your shell first)."
+fi
