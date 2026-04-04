@@ -7,13 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	curl \
 	unzip \
 	jq \
-	zstd \
-	sudo \
 	less \
-	btop \
-	tmux \
 	ca-certificates \
-	gnupg \
 	fd-find \
 	ripgrep \
 	bat \
@@ -29,6 +24,9 @@ ARG DELTA_VERSION=0.18.2
 
 RUN mkdir -p -m 755 /etc/apt/keyrings \
 	&& ARCH=$(dpkg --print-architecture) \
+	# gnupg needed for key imports, purged at end of this layer
+	&& apt-get update \
+	&& apt-get install -y --no-install-recommends gnupg \
 	# GitHub CLI
 	&& curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
 	&& chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
@@ -51,7 +49,8 @@ RUN mkdir -p -m 755 /etc/apt/keyrings \
 
 # 3. Binary Tools (arch-aware, single layer)
 
-RUN ARCH=$(uname -m) \
+RUN apt-get update && apt-get install -y --no-install-recommends zstd && rm -rf /var/lib/apt/lists/* \
+	&& ARCH=$(uname -m) \
 	&& if [ "$ARCH" = "aarch64" ]; then ZARCH="aarch64"; LARCH="arm64"; GOARCH="arm64"; OCARCH="arm64"; else ZARCH="x86_64"; LARCH="x86_64"; GOARCH="amd64"; OCARCH="x64"; fi \
 	# Lazygit
 	&& LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*') \
@@ -89,14 +88,15 @@ RUN ARCH=$(uname -m) \
 	&& find /tmp -name 'edit' -type f -executable -exec mv {} /usr/local/bin/edit \; \
 	# OpenCode
 	&& curl -fsSL "https://github.com/anomalyco/opencode/releases/latest/download/opencode-linux-${OCARCH}.tar.gz" | tar xz -C /tmp \
-	&& find /tmp -name 'opencode' -type f -executable -exec mv {} /usr/local/bin/opencode \;
+	&& find /tmp -name 'opencode' -type f -executable -exec mv {} /usr/local/bin/opencode \; \
+	# Purge build-only dependency
+	&& apt-get purge -y --auto-remove zstd && rm -rf /var/lib/apt/lists/*
 
 # 4. User Setup
 
 RUN useradd -m -s /bin/bash dev \
 	&& mkdir -p /home/dev/.claude /home/dev/.config/lazygit \
-	&& chown -R dev:dev /home/dev \
-	&& echo "dev ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+	&& chown -R dev:dev /home/dev
 
 # 5. Config Files
 
@@ -124,8 +124,21 @@ eval "$(starship init bash)"
 eval "$(zoxide init bash --cmd cd)"
 alias ls='eza --icons'
 alias ll='eza -la --icons'
+alias lsa='ls -a'
+alias lt='eza --tree --level=2 --long --icons --git'
+alias lta='lt -a'
 alias cat='bat --paging=never'
+alias ff="fzf --preview 'bat --style=numbers --color=always {}'"
+alias eff='$EDITOR "$(ff)"'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias c='opencode'
 alias claude-yolo='claude --dangerously-skip-permissions'
+alias g='git'
+alias gcm='git commit -m'
+alias gcam='git commit -a -m'
+alias gcad='git commit -a --amend'
 alias lg='lazygit'
 export EDITOR='edit'
 export PATH="$HOME/.local/bin:$PATH"
