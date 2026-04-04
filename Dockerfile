@@ -97,23 +97,8 @@ RUN useradd -m -s /bin/bash dev \
 
 # 5. Config Files
 
-RUN cat <<'EOFGIT' > /etc/gitconfig
-[core]
-	pager = delta
-[interactive]
-	diffFilter = delta --color-only
-[delta]
-	navigate = true
-	dark = true
-[merge]
-	conflictstyle = zdiff3
-EOFGIT
-cat <<'EOFCFG' > /home/dev/.config/lazygit/config.yml
-git:
-  paging:
-    colorArg: always
-    pager: delta --dark --paging=never
-EOFCFG
+RUN printf '[core]\n\tpager = delta\n[interactive]\n\tdiffFilter = delta --color-only\n[delta]\n\tnavigate = true\n\tdark = true\n[merge]\n\tconflictstyle = zdiff3\n' > /etc/gitconfig \
+	&& printf 'git:\n  paging:\n    colorArg: always\n    pager: delta --dark --paging=never\n' > /home/dev/.config/lazygit/config.yml
 
 # 6. Claude Code Global CLAUDE.md (optional)
 
