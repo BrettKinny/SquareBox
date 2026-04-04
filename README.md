@@ -37,11 +37,11 @@ TUI Tools
 | Name | Language | Description |
 |------|----------|-------------|
 | [Claude Code](https://github.com/anthropics/claude-code) | TypeScript | AI coding assistant |
+| [opencode](https://github.com/anomalyco/opencode) | Go | AI coding TUI |
 | [edit](https://github.com/microsoft/edit) | Rust | Terminal text editor (Microsoft) |
 | [fresh](https://github.com/sinelaw/fresh) | Rust | Terminal text editor |
 | [gh-dash](https://github.com/dlvhdr/gh-dash) | Go | GitHub dashboard for the terminal |
 | [lazygit](https://github.com/jesseduffield/lazygit) | Go | Git terminal UI |
-| [opencode](https://github.com/anomalyco/opencode) | Go | AI coding TUI |
 | [yazi](https://github.com/sxyazi/yazi) | Rust | Terminal file manager |
 
 Aliases

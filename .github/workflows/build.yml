@@ -16,5 +16,65 @@ jobs:
         with:
           context: .
           push: false
+          load: true
+          tags: devbox:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Container creates successfully
+        run: |
+          docker create --name devbox-test \
+            -v /tmp/workspace:/workspace \
+            devbox:test
+
+      - name: CLI tools exist
+        run: |
+          docker run --rm devbox:test bash -c '
+            for cmd in bat curl delta eza fd fzf gh glow jq rg starship xh yq zoxide; do
+              which "$cmd" || { echo "MISSING: $cmd"; exit 1; }
+            done
+          '
+
+      - name: TUI tools exist
+        run: |
+          docker run --rm devbox:test bash -c '
+            for cmd in edit fresh gh-dash lazygit yazi; do
+              which "$cmd" || { echo "MISSING: $cmd"; exit 1; }
+            done
+          '
+
+      - name: Shell config loads without errors
+        run: docker run --rm devbox:test bash -lc 'echo ok'
+
+      - name: Install script works (non-TTY)
+        run: |
+          mkdir -p /tmp/workspace
+          bash install.sh 2>&1 | tail -1 | grep -q 'Install complete'
+
+      - name: Setup script installs Claude Code from saved config
+        run: |
+          mkdir -p /tmp/workspace/.devbox
+          echo "claude" > /tmp/workspace/.devbox/ai-tool
+          echo "none" > /tmp/workspace/.devbox/sdks
+          docker run --rm \
+            -v /tmp/workspace:/workspace \
+            devbox:test bash -lc '
+              ~/setup.sh && touch ~/.devbox-setup-done
+              which claude || { echo "Claude Code not installed"; exit 1; }
+            '
+
+      - name: Setup script installs OpenCode from saved config
+        run: |
+          mkdir -p /tmp/workspace/.devbox
+          echo "opencode" > /tmp/workspace/.devbox/ai-tool
+          echo "none" > /tmp/workspace/.devbox/sdks
+          docker run --rm \
+            -v /tmp/workspace:/workspace \
+            devbox:test bash -lc '
+              ~/setup.sh && touch ~/.devbox-setup-done
+              which opencode || { echo "OpenCode not installed"; exit 1; }
+            '
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f devbox-test 2>/dev/null || true
