@@ -127,6 +127,7 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 [ -f ~/.devbox-ai-aliases ] && source ~/.devbox-ai-aliases
+[ -f ~/.devbox-sdk-paths ] && source ~/.devbox-sdk-paths
 alias g='git'
 alias gcm='git commit -m'
 alias gcam='git commit -a -m'

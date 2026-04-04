@@ -71,13 +71,35 @@ Inspired by [Omarchy](https://omarchy.com).
 | `claude-yolo` | `claude --dangerously-skip-permissions` | Claude without prompts |
 | `opencode-yolo` | `opencode --dangerously-skip-permissions` | OpenCode without prompts |
 
+Prerequisites
+-------------
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Git](https://git-scm.com/)
+
 Install
 -------
 
     curl -fsSL https://raw.githubusercontent.com/BrettKinny/tui-devbox/main/install.sh | bash
 
 This clones the repo, builds the Docker image, and drops you into the container.
-On first login, a setup script runs automatically to configure git and GitHub CLI.
+On first login, a setup script runs automatically to configure git, GitHub CLI,
+your choice of AI coding assistant, and language SDKs.
+
+SDKs
+----
+
+The following SDKs are available during first-run setup:
+
+| SDK | Installed via |
+|-----|---------------|
+| Node.js | [nvm](https://github.com/nvm-sh/nvm) (LTS) |
+| Python | [uv](https://github.com/astral-sh/uv) |
+| Go | [go.dev](https://go.dev) |
+| .NET | [dotnet-install](https://dot.net) (LTS) |
+
+Selections are saved to the workspace volume and reused automatically on
+container rebuilds.
 
 Start
 -----
@@ -122,3 +144,18 @@ Your code in ~/tui-devbox-workspace is safe since it lives on the host.
 Or equivalently, re-run the install script:
 
     ~/tui-devbox/install.sh
+
+Uninstall
+---------
+
+    docker stop devbox 2>/dev/null; docker rm devbox
+    docker rmi devbox
+    rm -rf ~/tui-devbox
+
+Remove the aliases from your shell config (~/.bashrc or ~/.zshrc):
+
+    sed -i '/alias devbox=/d' ~/.bashrc ~/.zshrc 2>/dev/null
+    sed -i '/alias devbox-update=/d' ~/.bashrc ~/.zshrc 2>/dev/null
+
+Your code in ~/tui-devbox-workspace is left untouched. Delete it manually if
+you no longer need it.
