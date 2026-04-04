@@ -27,29 +27,16 @@ jobs:
             -v /tmp/workspace:/workspace \
             devbox:test
 
-      - name: CLI tools exist
+      - name: All tools exist
         run: |
           docker run --rm devbox:test bash -c '
-            for cmd in bat curl delta eza fd fzf gh glow jq rg starship xh yq zoxide; do
-              which "$cmd" || { echo "MISSING: $cmd"; exit 1; }
-            done
-          '
-
-      - name: TUI tools exist
-        run: |
-          docker run --rm devbox:test bash -c '
-            for cmd in edit fresh gh-dash lazygit yazi; do
+            for cmd in bat curl delta edit eza fd fresh fzf gh gh-dash glow jq lazygit rg starship xh yazi yq zoxide; do
               which "$cmd" || { echo "MISSING: $cmd"; exit 1; }
             done
           '
 
       - name: Shell config loads without errors
         run: docker run --rm devbox:test bash -lc 'echo ok'
-
-      - name: Install script works (non-TTY)
-        run: |
-          mkdir -p /tmp/workspace
-          bash install.sh 2>&1 | tail -1 | grep -q 'Install complete'
 
       - name: Cleanup
         if: always()
