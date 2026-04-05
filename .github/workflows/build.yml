@@ -24,7 +24,7 @@ jobs:
       - name: Image size breakdown
         run: |
           echo "## Total"
-          docker images devbox:test --format '{{.Size}}'
+          docker images devbox:test
           echo ""
           echo "## Layers"
           docker history devbox:test --human --no-trunc
