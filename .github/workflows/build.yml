@@ -21,6 +21,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Image size breakdown
+        run: |
+          echo "## Total"
+          docker image inspect devbox:test --format '{{.Size}}' | numfmt --to=iec-i --suffix=B
+          echo ""
+          echo "## Layers"
+          docker history devbox:test --human --format "{{.Size}}\t{{.CreatedBy}}"
+
       - name: Devcontainer config is valid JSON
         run: jq empty .devcontainer/devcontainer.json
 
