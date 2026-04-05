@@ -21,6 +21,22 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Verify image loaded
+        run: docker image inspect squarebox:test > /dev/null
+
+      - name: Image size breakdown
+        run: |
+          docker run --rm squarebox:test bash -c '
+            echo "## Binaries in /usr/local/bin"
+            du -sh /usr/local/bin/* 2>/dev/null | sort -rh
+            echo ""
+            echo "## APT packages (dpkg)"
+            dpkg-query -W --showformat="\${Installed-Size}\t\${Package}\n" | sort -rn | head -30
+            echo ""
+            echo "## Filesystem usage by top-level dirs"
+            du -sh /* 2>/dev/null | sort -rh | head -20
+          '
+
       - name: Devcontainer config is valid JSON
         run: jq empty .devcontainer/devcontainer.json
 
