@@ -26,3 +26,6 @@ fed6b0ae90ce2c32ac029c2ce891cd2ad1a1cdd9a12d21fb14ed25d18dae658b  gh-dash_v4.23.
 # Glow 2.1.1
 59106b08be69b2a0bda1178327bbb7accd584e7c113ba3d2f5ef6e48ff3ac27f  glow_2.1.1_Linux_x86_64.tar.gz
 ab12a703cc6efd06caf24860344a2e8bc2518055fdd986f98eb761c47917ef3d  glow_2.1.1_Linux_arm64.tar.gz
+# Gum 0.17.0
+69ee169bd6387331928864e94d47ed01ef649fbfe875baed1bbf27b5377a6fdb  gum_0.17.0_Linux_x86_64.tar.gz
+b0b9ed95cbf7c8b7073f17b9591811f5c001e33c7cfd066ca83ce8a07c576f9c  gum_0.17.0_Linux_arm64.tar.gz
