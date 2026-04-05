@@ -36,13 +36,21 @@ TUI Tools
 
 | Name | Language | Description |
 |------|----------|-------------|
-| [Claude Code](https://github.com/anthropics/claude-code) | TypeScript | AI coding assistant |
-| [opencode](https://github.com/anomalyco/opencode) | Go | AI coding TUI |
 | [edit](https://github.com/microsoft/edit) | Rust | Terminal text editor (Microsoft) |
 | [fresh](https://github.com/sinelaw/fresh) | Rust | Terminal text editor |
 | [gh-dash](https://github.com/dlvhdr/gh-dash) | Go | GitHub dashboard for the terminal |
 | [lazygit](https://github.com/jesseduffield/lazygit) | Go | Git terminal UI |
 | [yazi](https://github.com/sxyazi/yazi) | Rust | Terminal file manager |
+
+AI Coding Assistants (optional)
+-------------------------------
+
+Installed during first-run setup — choose one or both:
+
+| Name | Language | Description |
+|------|----------|-------------|
+| [Claude Code](https://github.com/anthropics/claude-code) | TypeScript | AI coding assistant |
+| [opencode](https://github.com/anomalyco/opencode) | Go | AI coding TUI |
 
 Aliases
 -------
@@ -86,10 +94,10 @@ This clones the repo, builds the Docker image, and drops you into the container.
 On first login, a setup script runs automatically to configure git, GitHub CLI,
 your choice of AI coding assistant, and language SDKs.
 
-SDKs
-----
+SDKs (optional)
+---------------
 
-The following SDKs are available during first-run setup:
+Selected during first-run setup — choose any combination, all, or none:
 
 | SDK | Installed via |
 |-----|---------------|
