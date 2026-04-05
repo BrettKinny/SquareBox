@@ -22,11 +22,11 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Verify image loaded
-        run: docker image inspect devbox:test > /dev/null
+        run: docker image inspect squarebox:test > /dev/null
 
       - name: Image size breakdown
         run: |
-          docker run --rm devbox:test bash -c '
+          docker run --rm squarebox:test bash -c '
             echo "## Binaries in /usr/local/bin"
             du -sh /usr/local/bin/* 2>/dev/null | sort -rh
             echo ""
