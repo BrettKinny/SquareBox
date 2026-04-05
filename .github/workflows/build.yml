@@ -22,11 +22,10 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Image size breakdown
+        if: success()
+        continue-on-error: true
         run: |
-          echo "## Total"
           docker images devbox:test
-          echo ""
-          echo "## Layers"
           docker history devbox:test --human --no-trunc
 
       - name: Devcontainer config is valid JSON
