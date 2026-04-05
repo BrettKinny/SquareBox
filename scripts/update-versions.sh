@@ -85,6 +85,9 @@ GH_DASH_VERSION=$(strip_v "$GH_DASH_TAG")
 GLOW_TAG=$(gh_latest_tag charmbracelet/glow)
 GLOW_VERSION=$(strip_v "$GLOW_TAG")
 
+GUM_TAG=$(gh_latest_tag charmbracelet/gum)
+GUM_VERSION=$(strip_v "$GUM_TAG")
+
 # --- setup.sh tools ---
 
 OPENCODE_TAG=$(gh_latest_tag anomalyco/opencode)
@@ -135,6 +138,7 @@ echo "  Yazi:     ${YAZI_VERSION}"
 echo "  Starship: ${STARSHIP_VERSION}"
 echo "  gh-dash:  ${GH_DASH_VERSION}"
 echo "  Glow:     ${GLOW_VERSION}"
+echo "  Gum:      ${GUM_VERSION}"
 echo "  OpenCode: ${OPENCODE_VERSION}"
 echo "  Go:       ${GO_VERSION}"
 echo "  NVM:      ${NVM_VERSION}"
@@ -204,6 +208,10 @@ echo "# Glow ${GLOW_VERSION}" >> "${REPO_ROOT}/checksums.txt"
 emit "glow x86_64" "https://github.com/charmbracelet/glow/releases/download/v${GLOW_VERSION}/glow_${GLOW_VERSION}_Linux_x86_64.tar.gz" "glow_${GLOW_VERSION}_Linux_x86_64.tar.gz"
 emit "glow arm64" "https://github.com/charmbracelet/glow/releases/download/v${GLOW_VERSION}/glow_${GLOW_VERSION}_Linux_arm64.tar.gz" "glow_${GLOW_VERSION}_Linux_arm64.tar.gz"
 
+echo "# Gum ${GUM_VERSION}" >> "${REPO_ROOT}/checksums.txt"
+emit "gum x86_64" "https://github.com/charmbracelet/gum/releases/download/v${GUM_VERSION}/gum_${GUM_VERSION}_Linux_x86_64.tar.gz" "gum_${GUM_VERSION}_Linux_x86_64.tar.gz"
+emit "gum arm64" "https://github.com/charmbracelet/gum/releases/download/v${GUM_VERSION}/gum_${GUM_VERSION}_Linux_arm64.tar.gz" "gum_${GUM_VERSION}_Linux_arm64.tar.gz"
+
 # --- setup-checksums.txt ---
 
 cat > "${REPO_ROOT}/setup-checksums.txt" << HEADER
@@ -262,6 +270,7 @@ update_arg YAZI_VERSION "$YAZI_VERSION"
 update_arg STARSHIP_VERSION "$STARSHIP_VERSION"
 update_arg GH_DASH_VERSION "$GH_DASH_VERSION"
 update_arg GLOW_VERSION "$GLOW_VERSION"
+update_arg GUM_VERSION "$GUM_VERSION"
 
 # --- Update setup.sh versions ---
 

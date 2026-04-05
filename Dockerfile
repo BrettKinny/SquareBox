@@ -31,6 +31,7 @@ ARG YAZI_VERSION=26.1.22
 ARG STARSHIP_VERSION=1.24.2
 ARG GH_DASH_VERSION=4.23.2
 ARG GLOW_VERSION=2.1.1
+ARG GUM_VERSION=0.17.0
 
 # Validate version ARGs are non-empty
 RUN test -n "$DELTA_VERSION"    || { echo "Error: DELTA_VERSION is empty" >&2; exit 1; } \
@@ -40,7 +41,8 @@ RUN test -n "$DELTA_VERSION"    || { echo "Error: DELTA_VERSION is empty" >&2; e
  && test -n "$YAZI_VERSION"     || { echo "Error: YAZI_VERSION is empty" >&2; exit 1; } \
  && test -n "$STARSHIP_VERSION" || { echo "Error: STARSHIP_VERSION is empty" >&2; exit 1; } \
  && test -n "$GH_DASH_VERSION"  || { echo "Error: GH_DASH_VERSION is empty" >&2; exit 1; } \
- && test -n "$GLOW_VERSION"     || { echo "Error: GLOW_VERSION is empty" >&2; exit 1; }
+ && test -n "$GLOW_VERSION"     || { echo "Error: GLOW_VERSION is empty" >&2; exit 1; } \
+ && test -n "$GUM_VERSION"      || { echo "Error: GUM_VERSION is empty" >&2; exit 1; }
 
 # Checksum verification infrastructure
 COPY checksums.txt /tmp/checksums.txt
@@ -111,7 +113,13 @@ RUN DPKG_ARCH=$(dpkg --print-architecture) \
 	&& verify-checksum /tmp/glow.tar.gz "glow_${GLOW_VERSION}_Linux_${LARCH}.tar.gz" \
 	&& tar xzf /tmp/glow.tar.gz -C /tmp \
 	&& find /tmp -name 'glow' -type f -executable -exec mv {} /usr/local/bin/glow \; \
-	&& rm -f /tmp/glow.tar.gz
+	&& rm -f /tmp/glow.tar.gz \
+	# Gum
+	&& curl -fsSLo /tmp/gum.tar.gz "https://github.com/charmbracelet/gum/releases/download/v${GUM_VERSION}/gum_${GUM_VERSION}_Linux_${LARCH}.tar.gz" \
+	&& verify-checksum /tmp/gum.tar.gz "gum_${GUM_VERSION}_Linux_${LARCH}.tar.gz" \
+	&& tar xzf /tmp/gum.tar.gz -C /tmp \
+	&& find /tmp -name 'gum' -type f -executable -exec mv {} /usr/local/bin/gum \; \
+	&& rm -f /tmp/gum.tar.gz
 
 # 3c. Shell Tools
 

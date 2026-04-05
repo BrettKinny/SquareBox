@@ -30,12 +30,22 @@ verify_checksum() {
 	fi
 }
 
-echo "=== SquareBox Setup ==="
-echo
-
 # Detect interactive terminal
 INTERACTIVE=false
 [ -t 0 ] && INTERACTIVE=true
+
+# Check for gum TUI tool
+HAS_GUM=false
+if $INTERACTIVE && command -v gum &>/dev/null; then
+	HAS_GUM=true
+fi
+
+if $HAS_GUM; then
+	gum style --border double --padding "0 2" --border-foreground 212 "SquareBox Setup"
+else
+	echo "=== SquareBox Setup ==="
+fi
+echo
 
 # Git identity
 if [ -z "$(git config --global user.name 2>/dev/null)" ]; then
@@ -87,17 +97,28 @@ if [ -f "$AI_CONFIG" ]; then
 else
 	if $INTERACTIVE; then
 		echo
-		echo "Choose your AI coding assistant:"
-		echo "  1) Claude Code"
-		echo "  2) OpenCode"
-		echo "  3) Both"
-		read -rp "Selection [1/2/3]: " selection
-		case "$selection" in
-			1) ai_choice="claude" ;;
-			2) ai_choice="opencode" ;;
-			3) ai_choice="both" ;;
-			*) echo "Invalid selection, defaulting to Claude Code"; ai_choice="claude" ;;
-		esac
+		if $HAS_GUM; then
+			ai_label=$(gum choose --header "Choose your AI coding assistant:" \
+				"Claude Code" "OpenCode" "Both") || true
+			case "$ai_label" in
+				"Claude Code") ai_choice="claude" ;;
+				"OpenCode")    ai_choice="opencode" ;;
+				"Both")        ai_choice="both" ;;
+				*)             echo "No selection, defaulting to Claude Code"; ai_choice="claude" ;;
+			esac
+		else
+			echo "Choose your AI coding assistant:"
+			echo "  1) Claude Code"
+			echo "  2) OpenCode"
+			echo "  3) Both"
+			read -rp "Selection [1/2/3]: " selection
+			case "$selection" in
+				1) ai_choice="claude" ;;
+				2) ai_choice="opencode" ;;
+				3) ai_choice="both" ;;
+				*) echo "Invalid selection, defaulting to Claude Code"; ai_choice="claude" ;;
+			esac
+		fi
 	else
 		echo "Defaulting to Claude Code (non-interactive)"
 		ai_choice="claude"
@@ -113,7 +134,7 @@ if [ "$ai_choice" = "claude" ] || [ "$ai_choice" = "both" ]; then
 fi
 
 # Pinned versions — update via: scripts/update-versions.sh
-OPENCODE_VERSION="1.3.13"
+OPENCODE_VERSION="1.3.15"
 MICRO_VERSION="2.0.15"
 EDIT_VERSION="1.2.1"
 EDIT_ASSET_VERSION="1.2.0"
@@ -166,27 +187,44 @@ if [ -f "$EDITOR_CONFIG" ]; then
 else
 	if $INTERACTIVE; then
 		echo
-		echo "Select text editors to install (comma-separated, or 'all', or press Enter to skip):"
-		echo "  Nano is always available as the default editor."
-		echo "  1) micro    — modern, intuitive terminal editor"
-		echo "  2) edit     — terminal text editor (Microsoft)"
-		echo "  3) fresh    — modern terminal text editor"
-		echo "  4) helix    — modal editor (Kakoune-inspired)"
-		echo "  5) nvim     — Neovim"
-		read -rp "Selection [1,2,3,4,5/all/skip]: " editor_selection
-		editor_list=""
-		if [ "$editor_selection" = "all" ]; then
-			editor_list="micro,edit,fresh,helix,nvim"
-		elif [ -n "$editor_selection" ]; then
-			for item in $(echo "$editor_selection" | tr ',' ' '); do
-				case "$item" in
-					1) editor_list="${editor_list:+$editor_list,}micro" ;;
-					2) editor_list="${editor_list:+$editor_list,}edit" ;;
-					3) editor_list="${editor_list:+$editor_list,}fresh" ;;
-					4) editor_list="${editor_list:+$editor_list,}helix" ;;
-					5) editor_list="${editor_list:+$editor_list,}nvim" ;;
-				esac
-			done
+		if $HAS_GUM; then
+			echo "Nano is always available as the default editor."
+			selected=$(gum choose --no-limit \
+				--header "Select text editors to install (space=toggle, enter=confirm):" \
+				"micro  — modern, intuitive terminal editor" \
+				"edit   — terminal text editor (Microsoft)" \
+				"fresh  — modern terminal text editor" \
+				"helix  — modal editor (Kakoune-inspired)" \
+				"nvim   — Neovim") || true
+			editor_list=""
+			while IFS= read -r line; do
+				[ -z "$line" ] && continue
+				name="${line%% *}"
+				editor_list="${editor_list:+$editor_list,}${name}"
+			done <<< "$selected"
+		else
+			echo "Select text editors to install (comma-separated, or 'all', or press Enter to skip):"
+			echo "  Nano is always available as the default editor."
+			echo "  1) micro    — modern, intuitive terminal editor"
+			echo "  2) edit     — terminal text editor (Microsoft)"
+			echo "  3) fresh    — modern terminal text editor"
+			echo "  4) helix    — modal editor (Kakoune-inspired)"
+			echo "  5) nvim     — Neovim"
+			read -rp "Selection [1,2,3,4,5/all/skip]: " editor_selection
+			editor_list=""
+			if [ "$editor_selection" = "all" ]; then
+				editor_list="micro,edit,fresh,helix,nvim"
+			elif [ -n "$editor_selection" ]; then
+				for item in $(echo "$editor_selection" | tr ',' ' '); do
+					case "$item" in
+						1) editor_list="${editor_list:+$editor_list,}micro" ;;
+						2) editor_list="${editor_list:+$editor_list,}edit" ;;
+						3) editor_list="${editor_list:+$editor_list,}fresh" ;;
+						4) editor_list="${editor_list:+$editor_list,}helix" ;;
+						5) editor_list="${editor_list:+$editor_list,}nvim" ;;
+					esac
+				done
+			fi
 		fi
 	else
 		echo "Skipping editor selection (non-interactive)"
@@ -296,24 +334,41 @@ if [ -f "$SDK_CONFIG" ]; then
 else
 	if $INTERACTIVE; then
 		echo
-		echo "Select SDKs to install (comma-separated, or 'all', or 'none'):"
-		echo "  1) Node.js"
-		echo "  2) Python"
-		echo "  3) Go"
-		echo "  4) .NET"
-		read -rp "Selection [1,2,3,4/all/none]: " sdk_selection
-		sdk_list=""
-		if [ "$sdk_selection" = "all" ]; then
-			sdk_list="node,python,go,dotnet"
-		elif [ "$sdk_selection" != "none" ] && [ -n "$sdk_selection" ]; then
-			for item in $(echo "$sdk_selection" | tr ',' ' '); do
-				case "$item" in
-					1) sdk_list="${sdk_list:+$sdk_list,}node" ;;
-					2) sdk_list="${sdk_list:+$sdk_list,}python" ;;
-					3) sdk_list="${sdk_list:+$sdk_list,}go" ;;
-					4) sdk_list="${sdk_list:+$sdk_list,}dotnet" ;;
+		if $HAS_GUM; then
+			selected=$(gum choose --no-limit \
+				--header "Select SDKs to install (space=toggle, enter=confirm):" \
+				"Node.js" "Python" "Go" ".NET") || true
+			sdk_list=""
+			while IFS= read -r line; do
+				case "$line" in
+					"Node.js") sdk_list="${sdk_list:+$sdk_list,}node" ;;
+					"Python")  sdk_list="${sdk_list:+$sdk_list,}python" ;;
+					"Go")      sdk_list="${sdk_list:+$sdk_list,}go" ;;
+					".NET")    sdk_list="${sdk_list:+$sdk_list,}dotnet" ;;
 				esac
-			done
+			done <<< "$selected"
+			# Empty gum output means nothing selected
+			[ -z "$selected" ] && sdk_list=""
+		else
+			echo "Select SDKs to install (comma-separated, or 'all', or 'none'):"
+			echo "  1) Node.js"
+			echo "  2) Python"
+			echo "  3) Go"
+			echo "  4) .NET"
+			read -rp "Selection [1,2,3,4/all/none]: " sdk_selection
+			sdk_list=""
+			if [ "$sdk_selection" = "all" ]; then
+				sdk_list="node,python,go,dotnet"
+			elif [ "$sdk_selection" != "none" ] && [ -n "$sdk_selection" ]; then
+				for item in $(echo "$sdk_selection" | tr ',' ' '); do
+					case "$item" in
+						1) sdk_list="${sdk_list:+$sdk_list,}node" ;;
+						2) sdk_list="${sdk_list:+$sdk_list,}python" ;;
+						3) sdk_list="${sdk_list:+$sdk_list,}go" ;;
+						4) sdk_list="${sdk_list:+$sdk_list,}dotnet" ;;
+					esac
+				done
+			fi
 		fi
 	else
 		echo "Skipping SDK selection (non-interactive)"
