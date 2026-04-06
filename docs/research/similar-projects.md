@@ -42,9 +42,59 @@ These are the most directly comparable projects — Docker environments built sp
 - **Similarity:** Docker + Claude Code.
 - **Difference:** Simpler scope, container wrapper rather than full environment.
 
+### VishalJ99/claude-docker
+- **URL:** https://github.com/VishalJ99/claude-docker
+- **Stars:** ~162
+- **Description:** Docker container for running Claude Code with full permissions and Twilio SMS notifications.
+- **Similarity:** Docker container for Claude Code with pre-configured MCP servers and development tools.
+- **Difference:** Single AI assistant (Claude Code only). Adds Twilio notifications. Less focus on bundled CLI/TUI tools.
+
+### spamsch/devbox
+- **URL:** https://github.com/spamsch/devbox
+- **Stars:** ~10
+- **Description:** Docker-based OpenCode development environment deployable on a server.
+- **Key features:** Zsh + Oh-My-Zsh + Starship, fzf/ripgrep/fd, persistent container model.
+- **Similarity:** Very close — Docker + AI coding + Starship + modern CLI tools + persistent containers.
+- **Difference:** Focused on OpenCode specifically. Designed for server deployment. Smaller tool set.
+
 ---
 
-## Category 2: AI Agent Development Environments
+## Category 2: AI Agent Session Managers & Sandboxes
+
+These manage or sandbox AI coding agents in containers, overlapping with squarebox's AI integration.
+
+### njbrake/agent-of-empires
+- **URL:** https://github.com/njbrake/agent-of-empires
+- **Stars:** ~1,449
+- **Description:** Terminal session manager for Claude Code, OpenCode, Gemini CLI, Codex CLI, Copilot CLI, and more via tmux and git worktrees.
+- **Key features:** Supports the same set of AI coding assistants as squarebox. Docker sandboxing for isolation. Multi-agent support.
+- **Similarity:** Multi-AI-assistant support with Docker isolation.
+- **Difference:** Session/agent manager (TUI for tmux sessions and git worktrees), not a pre-built development environment image.
+
+### 89luca89/clampdown
+- **URL:** https://github.com/89luca89/clampdown
+- **Stars:** ~55
+- **Description:** Run AI coding agents in hardened container sandboxes with landlock/seccomp.
+- **Similarity:** Container sandboxes for Claude Code and OpenCode.
+- **Difference:** Security hardening focus, not a rich developer environment with bundled tools.
+
+### 0xferrous/agent-box
+- **URL:** https://github.com/0xferrous/agent-box
+- **Stars:** ~16
+- **Description:** Sandboxed containers for AI coding agents with disposable Git/Jujutsu workspaces.
+- **Similarity:** Container-based environments for Claude Code, Codex, Gemini CLI.
+- **Difference:** Disposable (not persistent) workspaces. Nix-based reproducibility. Less CLI tool bundling.
+
+### UniSoma/aishell
+- **URL:** https://github.com/UniSoma/aishell
+- **Stars:** ~6
+- **Description:** Docker sandbox for running AI coding agents (Pi, Claude Code, OpenCode, Gemini, Codex) in isolated containers.
+- **Similarity:** Multi-agent Docker sandbox supporting most of the same AI tools.
+- **Difference:** Written in Clojure. Sandbox orchestrator rather than a full developer environment.
+
+---
+
+## Category 3: AI-Oriented Developer Environments (Non-Docker)
 
 These projects set up complete environments for AI-assisted coding workflows.
 
@@ -64,7 +114,7 @@ These projects set up complete environments for AI-assisted coding workflows.
 
 ---
 
-## Category 3: Dockerized Developer Environments with Modern CLI Tools
+## Category 4: Dockerized Developer Environments with Modern CLI Tools
 
 These bundle modern terminal tools in containers but may not include AI assistants.
 
@@ -97,7 +147,30 @@ These bundle modern terminal tools in containers but may not include AI assistan
 
 ---
 
-## Category 4: Opinionated Developer Setup Systems (Non-Docker)
+### MashMB/nvim-ide
+- **URL:** https://github.com/MashMB/nvim-ide
+- **Stars:** ~224
+- **Description:** Neovim as IDE in Docker container with language support, file explorer, Git integration.
+- **Similarity:** Dockerized development environment with Neovim and Git tools.
+- **Difference:** Narrowly focused on Neovim as IDE. No modern CLI tool bundle. No AI assistants.
+
+### tecnickcom/alldev
+- **URL:** https://github.com/tecnickcom/alldev
+- **Stars:** ~47
+- **Description:** Dockerfile for a generic development environment based on Ubuntu Linux.
+- **Similarity:** Ubuntu-based Docker image with many developer tools pre-installed.
+- **Difference:** Oriented toward CI/CD pipelines. No modern CLI tools (starship, bat, eza). No interactive setup. No AI tools.
+
+### phusion/baseimage-docker
+- **URL:** https://github.com/phusion/baseimage-docker
+- **Stars:** ~9,095
+- **Description:** Minimal Ubuntu base image modified for Docker-friendliness with proper process management.
+- **Similarity:** Ubuntu-based Docker image designed for long-running containers.
+- **Difference:** A base image layer, not an opinionated developer environment. No CLI tools, no AI assistants.
+
+---
+
+## Category 5: Opinionated Developer Setup Systems (Non-Docker)
 
 These aren't containerized but share the philosophy of curated, opinionated tool bundles.
 
@@ -131,7 +204,7 @@ These aren't containerized but share the philosophy of curated, opinionated tool
 
 ---
 
-## Category 5: Cloud/Self-Hosted Development Environments
+## Category 6: Cloud/Self-Hosted Development Environments
 
 Larger-scale platforms that solve a similar problem at organizational scale.
 
@@ -165,7 +238,7 @@ Larger-scale platforms that solve a similar problem at organizational scale.
 
 ---
 
-## Category 6: Dev Container Ecosystem
+## Category 7: Dev Container Ecosystem
 
 Standards and tools that squarebox builds upon.
 
@@ -184,17 +257,17 @@ Standards and tools that squarebox builds upon.
 
 ## Competitive Landscape Summary
 
-| Feature | squarebox | claudebox | lazy-agent | Lazy-Docker | omarchy | Devbox |
-|---|---|---|---|---|---|---|
-| Docker-based | Yes | Yes | No | Yes | No | No |
-| Persistent containers | Yes | Yes | N/A | Yes | N/A | N/A |
-| AI assistants (multi) | Yes (5) | Claude only | Claude + others | No | No | No |
-| Interactive setup | Yes | No | Yes | No | Yes | No |
-| Modern CLI tools | Yes (20+) | Minimal | Yes | Yes (40+) | Yes | Per-project |
-| Optional SDKs | Yes (4) | By profile | No | Partial | Partial | Via Nix |
-| Checksum verification | Yes | No | No | No | N/A | Via Nix |
-| Multi-arch (amd64+arm64) | Yes | Partial | N/A | Partial | N/A | Yes |
-| In-place updates | Yes (sqrbx-update) | No | No | No | Yes | Yes |
+| Feature | squarebox | claudebox (~998 stars) | agent-of-empires (~1.4k stars) | lazy-agent | Lazy-Docker | omarchy (~21.6k stars) | Devbox (~11.4k stars) |
+|---|---|---|---|---|---|---|---|
+| Docker-based | Yes | Yes | Yes | No | Yes | No | No |
+| Persistent containers | Yes | Yes | No (disposable) | N/A | Yes | N/A | N/A |
+| AI assistants (multi) | Yes (5) | Claude only | Yes (7+) | Claude + others | No | No | No |
+| Interactive setup | Yes | No | No | Yes | No | Yes | No |
+| Modern CLI tools | Yes (20+) | Minimal | Minimal | Yes | Yes (40+) | Yes | Per-project |
+| Optional SDKs | Yes (4) | By profile | No | No | Partial | Partial | Via Nix |
+| Checksum verification | Yes | No | No | No | No | N/A | Via Nix |
+| Multi-arch (amd64+arm64) | Yes | Partial | N/A | N/A | Partial | N/A | Yes |
+| In-place updates | Yes (sqrbx-update) | No | No | No | No | Yes | Yes |
 
 ### What makes squarebox unique:
 1. **Multi-AI-assistant support** — lets users pick any combination of 5 AI coding tools
