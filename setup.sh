@@ -11,6 +11,11 @@ trap cleanup EXIT
 
 SETUP_CHECKSUMS="${HOME}/setup-checksums.txt"
 
+# Fix /workspace ownership if volume mount left it owned by a different UID
+if [ -d /workspace ] && ! [ -w /workspace ]; then
+	sudo chown dev:dev /workspace
+fi
+
 # Verify SHA256 checksum of a downloaded file against the checksums file.
 # Usage: verify_checksum <file> <artifact-name>
 verify_checksum() {
