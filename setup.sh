@@ -223,27 +223,22 @@ if $INTERACTIVE; then
 		gum_selected=""
 		for ed in $(echo "$editor_prev" | tr ',' ' '); do
 			case "$ed" in
-				micro) gum_selected="${gum_selected:+$gum_selected,}micro  — modern, intuitive terminal editor" ;;
-				edit)  gum_selected="${gum_selected:+$gum_selected,}edit   — terminal text editor (Microsoft)" ;;
-				fresh) gum_selected="${gum_selected:+$gum_selected,}fresh  — modern terminal text editor" ;;
-				helix) gum_selected="${gum_selected:+$gum_selected,}helix  — modal editor (Kakoune-inspired)" ;;
-				nvim)  gum_selected="${gum_selected:+$gum_selected,}nvim   — Neovim" ;;
+				micro) gum_selected="${gum_selected:+$gum_selected,}micro" ;;
+				edit)  gum_selected="${gum_selected:+$gum_selected,}edit" ;;
+				fresh) gum_selected="${gum_selected:+$gum_selected,}fresh" ;;
+				helix) gum_selected="${gum_selected:+$gum_selected,}helix" ;;
+				nvim)  gum_selected="${gum_selected:+$gum_selected,}nvim" ;;
 			esac
 		done
 		echo "Nano is always available as the default editor."
 		gum_args=(--no-limit --header "Select text editors to install (space=toggle, enter=confirm):")
 		[ -n "$gum_selected" ] && gum_args+=(--selected "$gum_selected")
 		selected=$(gum choose "${gum_args[@]}" \
-			"micro  — modern, intuitive terminal editor" \
-			"edit   — terminal text editor (Microsoft)" \
-			"fresh  — modern terminal text editor" \
-			"helix  — modal editor (Kakoune-inspired)" \
-			"nvim   — Neovim") || true
+			"micro" "edit" "fresh" "helix" "nvim") || true
 		editor_list=""
 		while IFS= read -r line; do
 			[ -z "$line" ] && continue
-			name="${line%% *}"
-			editor_list="${editor_list:+$editor_list,}${name}"
+			editor_list="${editor_list:+$editor_list,}${line}"
 		done <<< "$selected"
 	else
 		echo "Select text editors to install (comma-separated, or 'all', or press Enter to skip):"
@@ -362,20 +357,18 @@ if $INTERACTIVE; then
 		gum_selected=""
 		for mux in $(echo "$mux_prev" | tr ',' ' '); do
 			case "$mux" in
-				tmux)   gum_selected="${gum_selected:+$gum_selected,}tmux    — classic terminal multiplexer" ;;
-				zellij) gum_selected="${gum_selected:+$gum_selected,}zellij  — friendly terminal workspace" ;;
+				tmux)   gum_selected="${gum_selected:+$gum_selected,}tmux" ;;
+				zellij) gum_selected="${gum_selected:+$gum_selected,}zellij" ;;
 			esac
 		done
 		gum_args=(--no-limit --header "Select terminal multiplexer (space=toggle, enter=confirm, or enter to skip):")
 		[ -n "$gum_selected" ] && gum_args+=(--selected "$gum_selected")
 		selected=$(gum choose "${gum_args[@]}" \
-			"tmux    — classic terminal multiplexer" \
-			"zellij  — friendly terminal workspace") || true
+			"tmux" "zellij") || true
 		mux_list=""
 		while IFS= read -r line; do
 			[ -z "$line" ] && continue
-			name="${line%% *}"
-			mux_list="${mux_list:+$mux_list,}${name}"
+			mux_list="${mux_list:+$mux_list,}${line}"
 		done <<< "$selected"
 	else
 		echo "Select terminal multiplexer (comma-separated, or 'all', or press Enter to skip):"
