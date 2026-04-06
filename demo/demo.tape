@@ -27,15 +27,17 @@ Type "bash demo/setup-demo.sh"
 Enter
 Show
 
-# --- Install phase plays out automatically (~4s) ---
-Sleep 7s
+# --- Install phase + header + git identity + gh auth ---
+Sleep 3s
 
-# --- AI assistant (gum choose, single select) ---
-# Claude Code is first option — just press Enter
-Sleep 300ms
+# --- AI assistant (gum choose --no-limit) ---
+# Select Claude Code (1st)
+Sleep 500ms
+Space
+Sleep 500ms
 Enter
 
-# Wait for Claude Code "install" (spinner ~1s + 0.3s sleep + gum render)
+# Wait for Claude Code "install"
 Sleep 2s
 
 # --- Editors (gum choose --no-limit) ---

@@ -21,19 +21,8 @@ spinner() {
     done
 }
 
-# --- Simulated install phase ---
+# --- Simulated install phase (skip clone/build, start at success) ---
 clear
-echo -e "> curl -fsSL https://raw.githubusercontent.com/SquareWaveSystems/SquareBox/main/install.sh | bash"
-echo
-echo "Cloning squarebox..."
-sleep 0.4
-echo -e "${BOLD}Building image...${RESET}"
-sleep 0.5
-for i in 1 2 3 4 5 6 7; do
-    echo "Step ${i}/7 : ✓"
-    sleep 0.2
-done
-echo
 echo -e "${GREEN}✓ Image built successfully${RESET}"
 sleep 0.2
 echo -e "${GREEN}✓ Container created${RESET}"
@@ -61,13 +50,19 @@ echo "GitHub CLI: already authenticated"
 
 # AI assistant — real gum choose (same as setup.sh)
 echo
-ai_label=$(gum choose --header "Choose your AI coding assistant:" \
+selected=$(gum choose --no-limit \
+    --header "Select AI coding assistants (space=toggle, enter=confirm):" \
     --cursor.foreground 208 --header.foreground 208 --selected.foreground 208 \
-    "Claude Code" "OpenCode" "Both") || true
+    "Claude Code" "GitHub Copilot CLI" "Google Gemini CLI" \
+    "OpenAI Codex CLI" "OpenCode") || true
 
-echo "Installing Claude Code..."
-spinner "Downloading claude..." 1
-printf "\r  ${GREEN}✓${RESET} Claude Code installed      \n"
+while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    echo "Installing ${line}..."
+    spinner "Downloading ${line}..." 1
+    printf "\r  ${GREEN}✓${RESET} ${line} installed            \n"
+    sleep 0.15
+done <<< "$selected"
 sleep 0.3
 
 # Editors — real gum choose (same as setup.sh)
