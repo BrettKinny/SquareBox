@@ -391,10 +391,25 @@ opencode_install() {
 	rm -rf "$tmp"
 }
 
+# --- zellij (user-installed, in ~/.local/bin) ---
+zellij_repo="zellij-org/zellij"
+zellij_current() { zellij --version 2>/dev/null | awk '{print $2}' || echo "not installed"; }
+zellij_latest() { strip_v "$(gh_latest_tag "$zellij_repo")"; }
+zellij_install() {
+	local ver="$1"
+	local artifact="zellij-${ZARCH}-unknown-linux-musl.tar.gz"
+	local tmp=$(make_tmp)
+	curl -fsSLo "$tmp/zellij.tar.gz" "https://github.com/${zellij_repo}/releases/download/v${ver}/${artifact}"
+	verify_checksum "$tmp/zellij.tar.gz" "$artifact" || { rm -rf "$tmp"; return 1; }
+	tar xzf "$tmp/zellij.tar.gz" -C "$tmp"
+	install "$tmp/zellij" "$HOME/.local/bin/zellij"
+	rm -rf "$tmp"
+}
+
 # ── Tool registry ──────────────────────────────────────────────────
 
-TOOLS=(delta yq lazygit xh yazi starship ghdash glow micro fresh edit helix nvim opencode)
-TOOL_DISPLAY_NAMES=(delta yq lazygit xh yazi starship gh-dash glow micro fresh edit helix nvim opencode)
+TOOLS=(delta yq lazygit xh yazi starship ghdash glow micro fresh edit helix nvim opencode zellij)
+TOOL_DISPLAY_NAMES=(delta yq lazygit xh yazi starship gh-dash glow micro fresh edit helix nvim opencode zellij)
 
 # ── Main logic ──────────────────────────────────────────────────────
 
@@ -410,7 +425,7 @@ usage() {
 	  sqrbx-update --help       Show this help
 
 	${BOLD}Tools:${RESET}
-	  delta, yq, lazygit, xh, yazi, starship, gh-dash, glow, micro, fresh, edit, helix, nvim, opencode
+	  delta, yq, lazygit, xh, yazi, starship, gh-dash, glow, micro, fresh, edit, helix, nvim, opencode, zellij
 
 	${DIM}Set GITHUB_TOKEN to avoid API rate limits.${RESET}
 	EOF

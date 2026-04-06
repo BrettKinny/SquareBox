@@ -131,6 +131,9 @@ HELIX_VERSION="$HELIX_TAG"
 NVIM_TAG=$(gh_latest_tag neovim/neovim)
 NVIM_VERSION=$(strip_v "$NVIM_TAG")
 
+ZELLIJ_TAG=$(gh_latest_tag zellij-org/zellij)
+ZELLIJ_VERSION=$(strip_v "$ZELLIJ_TAG")
+
 echo
 echo "Versions:"
 echo "  Delta:    ${DELTA_VERSION}"
@@ -150,6 +153,7 @@ echo "  Fresh:    ${FRESH_VERSION}"
 echo "  Edit:     ${EDIT_VERSION} (asset: ${EDIT_ASSET_VERSION})"
 echo "  Helix:    ${HELIX_VERSION}"
 echo "  Neovim:   ${NVIM_VERSION}"
+echo "  Zellij:   ${ZELLIJ_VERSION}"
 echo
 
 echo "Downloading artifacts and computing checksums..."
@@ -255,6 +259,10 @@ echo "# Neovim ${NVIM_VERSION}" >> "${REPO_ROOT}/setup-checksums.txt"
 emit_setup "nvim x86_64" "https://github.com/neovim/neovim/releases/download/v${NVIM_VERSION}/nvim-linux-x86_64.tar.gz" "nvim-linux-x86_64.tar.gz"
 emit_setup "nvim arm64" "https://github.com/neovim/neovim/releases/download/v${NVIM_VERSION}/nvim-linux-arm64.tar.gz" "nvim-linux-arm64.tar.gz"
 
+echo "# Zellij ${ZELLIJ_VERSION}" >> "${REPO_ROOT}/setup-checksums.txt"
+emit_setup "zellij x86_64" "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-x86_64-unknown-linux-musl.tar.gz" "zellij-x86_64-unknown-linux-musl.tar.gz"
+emit_setup "zellij aarch64" "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-aarch64-unknown-linux-musl.tar.gz" "zellij-aarch64-unknown-linux-musl.tar.gz"
+
 # --- Update Dockerfile ARGs ---
 
 echo
@@ -288,6 +296,7 @@ sed -i "s|^EDIT_ASSET_VERSION=.*|EDIT_ASSET_VERSION=\"${EDIT_ASSET_VERSION}\"|" 
 sed -i "s|^FRESH_VERSION=.*|FRESH_VERSION=\"${FRESH_VERSION}\"|" "${REPO_ROOT}/setup.sh"
 sed -i "s|^HELIX_VERSION=.*|HELIX_VERSION=\"${HELIX_VERSION}\"|" "${REPO_ROOT}/setup.sh"
 sed -i "s|^NVIM_VERSION=.*|NVIM_VERSION=\"${NVIM_VERSION}\"|" "${REPO_ROOT}/setup.sh"
+sed -i "s|^ZELLIJ_VERSION=.*|ZELLIJ_VERSION=\"${ZELLIJ_VERSION}\"|" "${REPO_ROOT}/setup.sh"
 
 echo
 echo "Done. Review changes with: git diff"
