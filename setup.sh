@@ -46,7 +46,7 @@ if $INTERACTIVE && command -v gum &>/dev/null; then
 fi
 
 if $HAS_GUM; then
-	gum style --border double --padding "0 2" --border-foreground 212 "squarebox setup"
+	gum style --border double --padding "0 2" --border-foreground 208 "squarebox setup"
 else
 	echo "=== squarebox setup ==="
 fi
@@ -124,7 +124,8 @@ if $INTERACTIVE; then
 
 	echo
 	if $HAS_GUM; then
-		gum_args=(--header "Choose your AI coding assistant:")
+		gum_args=(--header "Choose your AI coding assistant:"
+			--cursor.foreground 208 --header.foreground 208 --selected.foreground 208)
 		[ -n "$ai_default_label" ] && gum_args+=(--selected "$ai_default_label")
 		ai_label=$(gum choose "${gum_args[@]}" \
 			"Claude Code" "OpenCode" "Both") || true
@@ -221,6 +222,7 @@ else
 			echo "Nano is always available as the default editor."
 			selected=$(gum choose --no-limit \
 				--header "Select text editors to install (space=toggle, enter=confirm):" \
+				--cursor.foreground 208 --header.foreground 208 --selected.foreground 208 \
 				"micro  — modern, intuitive terminal editor" \
 				"edit   — terminal text editor (Microsoft)" \
 				"fresh  — modern terminal text editor" \
@@ -329,6 +331,7 @@ else
 		if $HAS_GUM; then
 			selected=$(gum choose --no-limit \
 				--header "Select terminal multiplexer (space=toggle, enter=confirm, or enter to skip):" \
+				--cursor.foreground 208 --header.foreground 208 --selected.foreground 208 \
 				"tmux    — classic terminal multiplexer" \
 				"zellij  — friendly terminal workspace") || true
 			mux_list=""
@@ -412,7 +415,8 @@ if $INTERACTIVE; then
 				dotnet) gum_selected="${gum_selected:+$gum_selected,}.NET" ;;
 			esac
 		done
-		gum_args=(--no-limit --header "Select SDKs to install (space=toggle, enter=confirm):")
+		gum_args=(--no-limit --header "Select SDKs to install (space=toggle, enter=confirm):"
+			--cursor.foreground 208 --header.foreground 208 --selected.foreground 208)
 		[ -n "$gum_selected" ] && gum_args+=(--selected "$gum_selected")
 		selected=$(gum choose "${gum_args[@]}" \
 			"Node.js" "Python" "Go" ".NET") || true
