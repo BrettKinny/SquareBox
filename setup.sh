@@ -5,7 +5,7 @@ cleanup() {
 	rm -f /tmp/opencode.tar.gz /tmp/micro.tar.gz /tmp/micro /tmp/edit.tar.zst \
 		/tmp/edit.tar /tmp/fresh.tar.gz /tmp/helix.tar.xz /tmp/nvim.tar.gz \
 		/tmp/nvm-install.sh /tmp/go.tar.gz /tmp/yazi.zip
-	rm -rf /tmp/micro-* /tmp/fresh* /tmp/helix-* /tmp/nvim-linux-* /tmp/yazi-*
+	rm -rf /tmp/micro-* /tmp/fresh* /tmp/helix-* /tmp/nvim-linux-* /tmp/yazi-* /tmp/zellij*
 }
 trap cleanup EXIT
 
@@ -171,8 +171,9 @@ EDIT_ASSET_VERSION="1.2.0"
 FRESH_VERSION="0.2.21"
 HELIX_VERSION="25.07.1"
 NVIM_VERSION="0.12.0"
+ZELLIJ_VERSION="0.44.0"
 
-for _var in OPENCODE_VERSION MICRO_VERSION EDIT_VERSION EDIT_ASSET_VERSION FRESH_VERSION HELIX_VERSION NVIM_VERSION; do
+for _var in OPENCODE_VERSION MICRO_VERSION EDIT_VERSION EDIT_ASSET_VERSION FRESH_VERSION HELIX_VERSION NVIM_VERSION ZELLIJ_VERSION; do
 	if [ -z "${!_var:-}" ]; then
 		echo "Error: ${_var} is empty or unset" >&2
 		exit 1
@@ -359,6 +360,86 @@ done
 		echo "export EDITOR='$editor_cmd'"
 	fi
 } > ~/.squarebox-editor-aliases
+
+# Terminal multiplexer
+MUX_CONFIG="/workspace/.squarebox/multiplexer"
+
+if [ -f "$MUX_CONFIG" ]; then
+	mux_list=$(cat "$MUX_CONFIG")
+	[ -n "$mux_list" ] && echo "Installing multiplexer(s): $mux_list (from previous selection)"
+else
+	if $INTERACTIVE; then
+		echo
+		if $HAS_GUM; then
+			selected=$(gum choose --no-limit \
+				--header "Select terminal multiplexer (space=toggle, enter=confirm, or enter to skip):" \
+				"tmux    — classic terminal multiplexer" \
+				"zellij  — friendly terminal workspace") || true
+			mux_list=""
+			while IFS= read -r line; do
+				[ -z "$line" ] && continue
+				name="${line%% *}"
+				mux_list="${mux_list:+$mux_list,}${name}"
+			done <<< "$selected"
+		else
+			echo "Select terminal multiplexer (comma-separated, or 'all', or press Enter to skip):"
+			echo "  1) tmux    — classic terminal multiplexer"
+			echo "  2) zellij  — friendly terminal workspace"
+			read -rp "Selection [1,2/all/skip]: " mux_selection
+			mux_list=""
+			if [ "$mux_selection" = "all" ]; then
+				mux_list="tmux,zellij"
+			elif [ -n "$mux_selection" ]; then
+				for item in $(echo "$mux_selection" | tr ',' ' '); do
+					case "$item" in
+						1) mux_list="${mux_list:+$mux_list,}tmux" ;;
+						2) mux_list="${mux_list:+$mux_list,}zellij" ;;
+					esac
+				done
+			fi
+		fi
+	else
+		echo "Skipping multiplexer selection (non-interactive)"
+		mux_list=""
+	fi
+	echo "$mux_list" > "$MUX_CONFIG"
+fi
+
+install_tmux() {
+	if command -v tmux &>/dev/null; then echo "Tmux already installed, skipping."; return 0; fi
+	echo "Installing tmux via apt..."
+	sudo apt-get update -qq && sudo apt-get install -y -qq tmux >/dev/null 2>&1
+	# Install default config
+	if [ ! -f ~/.tmux.conf ]; then
+		cat > ~/.tmux.conf <<-'TMUXCONF'
+		set -g mouse on
+		set -g default-terminal "tmux-256color"
+		set -g history-limit 10000
+		set -g prefix C-a
+		unbind C-b
+		bind C-a send-prefix
+		TMUXCONF
+	fi
+}
+
+install_zellij() {
+	if command -v zellij &>/dev/null; then echo "Zellij already installed, skipping."; return 0; fi
+	echo "Installing Zellij v${ZELLIJ_VERSION}..."
+	ARCH=$(uname -m)
+	if [ "$ARCH" = "aarch64" ]; then ZARCH="aarch64"; else ZARCH="x86_64"; fi
+	curl -fsSLo /tmp/zellij.tar.gz "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-${ZARCH}-unknown-linux-musl.tar.gz"
+	verify_checksum /tmp/zellij.tar.gz "zellij-${ZARCH}-unknown-linux-musl.tar.gz"
+	tar xzf /tmp/zellij.tar.gz -C /tmp
+	install /tmp/zellij ~/.local/bin/zellij
+	rm -f /tmp/zellij.tar.gz /tmp/zellij
+}
+
+for mux in $(echo "$mux_list" | tr ',' ' '); do
+	case "$mux" in
+		tmux) install_tmux ;;
+		zellij) install_zellij ;;
+	esac
+done
 
 # SDKs
 SDK_CONFIG="/workspace/.squarebox/sdks"

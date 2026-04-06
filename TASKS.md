@@ -74,7 +74,7 @@ Items are ordered by priority within each section. Sections are ordered by prior
 
 ## P4 — Features & Polish
 
-- [ ] **Add tmux and zellij as optional installs** — offer both terminal multiplexers in the setup.sh selection menu, preconfigured with sensible defaults
+- [x] **Add tmux and zellij as optional installs** — offer both terminal multiplexers in the setup.sh selection menu, preconfigured with sensible defaults
 - [ ] **Custom colour theme** — ship a unified terminal colour palette (e.g. Catppuccin or Tokyo Night) so bat, delta, fzf, eza, starship, and tmux all look coordinated out of the box
 - [ ] **Dotfile portability** — let users mount or bootstrap their own dotfiles (starship.toml, tmux.conf, aliases, etc.) via a `~/.squarebox/` convention, with sensible merge/override behaviour against the defaults
 - [ ] **Versioned releases with changelogs** — publish GitHub Releases with semantic version tags and changelogs so users can pin to a known-good version and see what changed
