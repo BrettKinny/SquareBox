@@ -1,26 +1,10 @@
-<div align="center">
-<table><tr>
-<td><h1>🟧</h1></td>
-<td>
+# 🟧📦 squarebox
 
-```
-███████╗ ██████╗ ██╗   ██╗ █████╗ ██████╗ ███████╗██████╗  ██████╗ ██╗  ██╗
-██╔════╝██╔═══██╗██║   ██║██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔═══██╗╚██╗██╔╝
-███████╗██║   ██║██║   ██║███████║██████╔╝█████╗  ██████╔╝██║   ██║ ╚███╔╝
-╚════██║██║▄▄ ██║██║   ██║██╔══██║██╔══██╗██╔══╝  ██╔══██╗██║   ██║ ██╔██╗
-███████║╚██████╔╝╚██████╔╝██║  ██║██║  ██║███████╗██████╔╝╚██████╔╝██╔╝ ██╗
-╚══════╝ ╚══▀▀═╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═════╝  ╚═════╝ ╚═╝  ╚═╝
-```
+**A containerized dev environment packed with modern CLI/TUI tools and AI coding assistants.**
 
-</td>
-<td><h1>📦</h1></td>
-</tr></table>
-</div>
-
-A containerized dev environment packed with modern CLI/TUI tools and AI coding
-assistants. Curated Rust/Go replacements for everyday Unix tools, multiple
-AI-powered editors, and sensible defaults — all in a reproducible Docker
-container you can spin up on any machine.
+Curated Rust/Go replacements for everyday Unix tools, multiple AI-powered
+editors, and sensible defaults — all in a reproducible Docker container you can
+spin up on any machine.
 
 ![squarebox first-run setup](https://raw.githubusercontent.com/SquareWaveSystems/squarebox/demo/demo/squarebox-setup.webp)
 
