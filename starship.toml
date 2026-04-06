@@ -1,9 +1,16 @@
 format = """
-$env_var\
-$all"""
+$all
+$env_var$character"""
 
 [env_var.SQUAREBOX]
 format = "[🟧📦](yellow) "
 
 [container]
-format = "[$symbol]($style) "
+disabled = true
+
+[line_break]
+disabled = false
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
