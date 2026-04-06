@@ -46,9 +46,9 @@ if $INTERACTIVE && command -v gum &>/dev/null; then
 fi
 
 if $HAS_GUM; then
-	gum style --border double --padding "0 2" --border-foreground 212 "squarebox Setup"
+	gum style --border double --padding "0 2" --border-foreground 212 "squarebox setup"
 else
-	echo "=== squarebox Setup ==="
+	echo "=== squarebox setup ==="
 fi
 echo
 
