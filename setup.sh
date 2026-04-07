@@ -264,10 +264,8 @@ NVM_VERSION="0.40.3"
 # SDK path setup file (create if missing, preserve on retry)
 touch ~/.squarebox-sdk-paths
 
-install_node() {
-	if command -v node &>/dev/null; then echo "Node.js already installed, skipping."; return 0; fi
+_install_node_inner() {
 	rm -rf "$HOME/.nvm"
-	echo "Installing Node.js (via nvm v${NVM_VERSION})..."
 	curl -fsSo /tmp/nvm-install.sh "https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh"
 	verify_checksum /tmp/nvm-install.sh "nvm-install-v${NVM_VERSION}.sh"
 	bash /tmp/nvm-install.sh >/dev/null 2>&1
@@ -283,6 +281,15 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 PATHS
 	fi
+}
+
+install_node() {
+	if command -v node &>/dev/null; then echo "Node.js already installed, skipping."; return 0; fi
+	run_with_spinner "Installing Node.js (via nvm v${NVM_VERSION})..." _install_node_inner
+	# Source nvm in current shell (spinner runs in subshell)
+	export NVM_DIR="$HOME/.nvm"
+	# shellcheck source=/dev/null
+	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 	if ! command -v node &>/dev/null; then
 		echo "Error: Node.js binary not found after installation" >&2
 		return 1
@@ -292,7 +299,6 @@ PATHS
 # Ensure Node.js is available for npm-based AI tools
 ensure_node_for_npm() {
 	if command -v node &>/dev/null; then return 0; fi
-	echo "Installing Node.js (required for npm-based AI tools)..."
 	install_node
 	# Ensure node/npm are available in this session
 	export NVM_DIR="$HOME/.nvm"
@@ -332,10 +338,10 @@ install_codex() {
 for ai_tool in $(echo "$ai_choice" | tr ',' ' '); do
 	case "$ai_tool" in
 		claude)
-			echo "Installing Claude Code..."
 			# Trust boundary: the Claude Code install script manages its own binary
 			# fetching and verification. We rely on HTTPS for script integrity.
-			curl -fsSL https://claude.ai/install.sh | bash >/dev/null 2>&1 \
+			run_with_spinner "Installing Claude Code..." \
+				bash -c 'curl -fsSL https://claude.ai/install.sh | bash >/dev/null 2>&1' \
 				|| echo "Warning: Claude Code installation failed."
 			;;
 		opencode)
@@ -463,16 +469,19 @@ install_fresh() {
 	run_with_spinner "Installing Fresh v${FRESH_VERSION}..." sb_install fresh "$FRESH_VERSION"
 }
 
-install_helix() {
-	if command -v hx &>/dev/null; then echo "Helix already installed, skipping."; return 0; fi
-	echo "Installing Helix v${HELIX_VERSION}..."
+_install_helix_inner() {
 	if sudo -n true 2>/dev/null; then
 		sudo apt-get update -qq && sudo apt-get install -y -qq xz-utils >/dev/null 2>&1
 	elif ! command -v xz &>/dev/null; then
 		echo "Error: xz-utils required for Helix but sudo unavailable to install it. Skipping Helix." >&2
 		return 1
 	fi
-	run_with_spinner "Downloading Helix..." sb_install helix "$HELIX_VERSION"
+	sb_install helix "$HELIX_VERSION"
+}
+
+install_helix() {
+	if command -v hx &>/dev/null; then echo "Helix already installed, skipping."; return 0; fi
+	run_with_spinner "Installing Helix v${HELIX_VERSION}..." _install_helix_inner
 }
 
 install_nvim() {
@@ -587,9 +596,7 @@ else
 	echo "$mux_list" > "$MUX_CONFIG"
 fi
 
-install_tmux() {
-	if command -v tmux &>/dev/null; then echo "Tmux already installed, skipping."; return 0; fi
-	echo "Installing tmux via apt..."
+_install_tmux_inner() {
 	sudo apt-get update -qq && sudo apt-get install -y -qq tmux >/dev/null 2>&1
 	# Install default config
 	if [ ! -f ~/.tmux.conf ]; then
@@ -602,6 +609,11 @@ install_tmux() {
 		bind C-a send-prefix
 		TMUXCONF
 	fi
+}
+
+install_tmux() {
+	if command -v tmux &>/dev/null; then echo "Tmux already installed, skipping."; return 0; fi
+	run_with_spinner "Installing tmux..." _install_tmux_inner
 }
 
 install_zellij() {
@@ -706,9 +718,7 @@ done
 
 # install_node is defined earlier (needed by npm-based AI tools)
 
-install_python() {
-	if command -v uv &>/dev/null; then echo "uv already installed, skipping."; return 0; fi
-	echo "Installing Python (via uv)..."
+_install_python_inner() {
 	# Trust boundary: the uv install script manages its own binary fetching
 	# and verification. We rely on HTTPS for script integrity.
 	curl -fsSL https://astral.sh/uv/install.sh | bash &>/dev/null
@@ -717,16 +727,20 @@ install_python() {
 export PATH="$HOME/.local/bin:$PATH"
 PATHS
 	fi
+}
+
+install_python() {
+	if command -v uv &>/dev/null; then echo "uv already installed, skipping."; return 0; fi
+	run_with_spinner "Installing Python (via uv)..." _install_python_inner
+	export PATH="$HOME/.local/bin:$PATH"
 	if ! command -v uv &>/dev/null; then
 		echo "Error: uv binary not found after installation" >&2
 		return 1
 	fi
 }
 
-install_go() {
-	if [ -x "${HOME}/.local/go/bin/go" ]; then echo "Go already installed, skipping."; return 0; fi
+_install_go_inner() {
 	rm -rf "$HOME/.local/go"
-	echo "Installing Go ${GO_VERSION}..."
 	curl -fsSLo /tmp/go.tar.gz "https://go.dev/dl/${GO_VERSION}.linux-${SB_GOARCH}.tar.gz"
 	verify_checksum /tmp/go.tar.gz "${GO_VERSION}.linux-${SB_GOARCH}.tar.gz"
 	tar xzf /tmp/go.tar.gz -C ~/.local
@@ -738,16 +752,19 @@ export GOPATH="$HOME/go"
 export PATH="$GOROOT/bin:$GOPATH/bin:$PATH"
 PATHS
 	fi
+}
+
+install_go() {
+	if [ -x "${HOME}/.local/go/bin/go" ]; then echo "Go already installed, skipping."; return 0; fi
+	run_with_spinner "Installing Go ${GO_VERSION}..." _install_go_inner
 	if [ ! -x "${HOME}/.local/go/bin/go" ]; then
 		echo "Error: Go binary not found after installation" >&2
 		return 1
 	fi
 }
 
-install_dotnet() {
-	if [ -x "${HOME}/.dotnet/dotnet" ]; then echo ".NET already installed, skipping."; return 0; fi
+_install_dotnet_inner() {
 	rm -rf "$HOME/.dotnet"
-	echo "Installing .NET..."
 	# Trust boundary: the .NET install script manages its own binary fetching
 	# and verification. We rely on HTTPS for script integrity.
 	curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel LTS >/dev/null 2>&1
@@ -757,6 +774,11 @@ export DOTNET_ROOT="$HOME/.dotnet"
 export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH"
 PATHS
 	fi
+}
+
+install_dotnet() {
+	if [ -x "${HOME}/.dotnet/dotnet" ]; then echo ".NET already installed, skipping."; return 0; fi
+	run_with_spinner "Installing .NET..." _install_dotnet_inner
 	if [ ! -x "${HOME}/.dotnet/dotnet" ]; then
 		echo "Error: .NET binary not found after installation" >&2
 		return 1
