@@ -15,7 +15,7 @@ if [ -f "$sdk_config" ]; then
 			node)   ver=$(node -v 2>/dev/null | tr -d 'v') && [ -n "$ver" ] && sdks+=("Node $ver") ;;
 			python) ver=$(python3 --version 2>/dev/null | awk '{print $2}'); [ -z "$ver" ] && ver=$(uv --version 2>/dev/null | awk '{print $2}') && ver="uv $ver"; [ -n "$ver" ] && sdks+=("Python $ver") ;;
 			go)     ver=$(go version 2>/dev/null | awk '{print $3}' | tr -d 'go') && [ -n "$ver" ] && sdks+=("Go $ver") ;;
-			dotnet) ver=$(dotnet --version 2>/dev/null) && [ -n "$ver" ] && sdks+=(".NET $ver") ;;
+			dotnet) ver=$(DOTNET_NOLOGO=1 dotnet --version 2>/dev/null | tail -1) && [ -n "$ver" ] && sdks+=(".NET $ver") ;;
 		esac
 	done
 fi
