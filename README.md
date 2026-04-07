@@ -89,7 +89,7 @@ Installed during first-run setup. Nano is always available as the default editor
 | [micro](https://github.com/micro-editor/micro) | Go | Modern, intuitive terminal editor |
 | [edit](https://github.com/microsoft/edit) | Rust | Terminal text editor (Microsoft) |
 | [fresh](https://github.com/sinelaw/fresh) | Rust | Modern terminal text editor |
-| [helix](https://github.com/helix-editor/helix) | Rust | Modal editor (Kakoune-inspired) |
+| [helix](https://github.com/helix-editor/helix) | Rust | Modal editor (Kakoune-inspired) — *coming soon* |
 | [nvim](https://github.com/neovim/neovim) | C/Lua | Neovim |
 
 ### Aliases
@@ -191,7 +191,7 @@ First-run selections add to that:
 | OpenAI Codex CLI | ~50 MB |
 | OpenCode | ~30 MB |
 | micro / edit | ~12 / ~7 MB |
-| fresh / helix / nvim | ~10 / ~80 / ~45 MB |
+| fresh / nvim | ~10 / ~45 MB |
 | Node.js | ~90 MB |
 | Python (uv) | ~35 MB |
 | Go | ~500 MB |

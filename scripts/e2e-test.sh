@@ -173,7 +173,7 @@ suite_setup_editors() {
 	# Pre-seed selections in /workspace/.squarebox/
 	mkdir -p /workspace/.squarebox
 	echo "opencode" > /workspace/.squarebox/ai-tool
-	echo "micro,edit,fresh,helix,nvim" > /workspace/.squarebox/editors
+	echo "micro,edit,fresh,nvim" > /workspace/.squarebox/editors
 	echo "tmux,zellij" > /workspace/.squarebox/multiplexer
 	echo "node,go" > /workspace/.squarebox/sdks
 
@@ -194,8 +194,7 @@ suite_setup_editors() {
 	run_test "3.7b micro installed" command -v micro
 	run_test "3.7c edit installed" command -v edit
 	run_test "3.7d fresh installed" command -v fresh
-	run_test "3.7e helix installed" command -v hx
-	run_test "3.7f nvim installed" command -v nvim
+	run_test "3.7e nvim installed" command -v nvim
 
 	# 3.8 multiplexers installed
 	run_test "3.8a tmux installed" command -v tmux

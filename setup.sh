@@ -3,9 +3,9 @@ set -euo pipefail
 
 cleanup() {
 	rm -f /tmp/opencode.tar.gz /tmp/micro.tar.gz /tmp/micro /tmp/edit.tar.zst \
-		/tmp/edit.tar /tmp/fresh.tar.gz /tmp/helix.tar.xz /tmp/nvim.tar.gz \
+		/tmp/edit.tar /tmp/fresh.tar.gz /tmp/nvim.tar.gz \
 		/tmp/nvm-install.sh /tmp/go.tar.gz /tmp/yazi.zip
-	rm -rf /tmp/micro-* /tmp/fresh* /tmp/helix-* /tmp/nvim-linux-* /tmp/yazi-* /tmp/zellij*
+	rm -rf /tmp/micro-* /tmp/fresh* /tmp/nvim-linux-* /tmp/yazi-* /tmp/zellij*
 }
 trap cleanup EXIT
 
@@ -247,11 +247,10 @@ MICRO_VERSION="2.0.15"
 EDIT_VERSION="1.2.1"
 EDIT_ASSET_VERSION="1.2.0"
 FRESH_VERSION="0.2.21"
-HELIX_VERSION="25.07.1"
 NVIM_VERSION="0.12.0"
 ZELLIJ_VERSION="0.44.0"
 
-for _var in OPENCODE_VERSION MICRO_VERSION EDIT_VERSION EDIT_ASSET_VERSION FRESH_VERSION HELIX_VERSION NVIM_VERSION ZELLIJ_VERSION; do
+for _var in OPENCODE_VERSION MICRO_VERSION EDIT_VERSION EDIT_ASSET_VERSION FRESH_VERSION NVIM_VERSION ZELLIJ_VERSION; do
 	if [ -z "${!_var:-}" ]; then
 		echo "Error: ${_var} is empty or unset" >&2
 		exit 1
@@ -392,7 +391,6 @@ if $INTERACTIVE; then
 				micro) gum_selected="${gum_selected:+$gum_selected,}micro" ;;
 				edit)  gum_selected="${gum_selected:+$gum_selected,}edit" ;;
 				fresh) gum_selected="${gum_selected:+$gum_selected,}fresh" ;;
-				helix) gum_selected="${gum_selected:+$gum_selected,}helix" ;;
 				nvim)  gum_selected="${gum_selected:+$gum_selected,}nvim" ;;
 			esac
 		done
@@ -400,7 +398,7 @@ if $INTERACTIVE; then
 		gum_args=(--no-limit --header "Select text editors to install:")
 		[ -n "$gum_selected" ] && gum_args+=(--selected "$gum_selected")
 		selected=$(gum choose "${gum_args[@]}" \
-			"micro" "edit" "fresh" "helix" "nvim") || true
+			"micro" "edit" "fresh" "nvim") || true
 		editor_list=""
 		while IFS= read -r line; do
 			[ -z "$line" ] && continue
@@ -409,13 +407,12 @@ if $INTERACTIVE; then
 	else
 		echo "Select text editors to install (comma-separated, or 'all', or press Enter to skip):"
 		echo "  Nano is always available as the default editor."
-		for ed_item in "1:micro:micro" "2:edit:edit" "3:fresh:fresh" "4:helix:helix" "5:nvim:nvim"; do
+		for ed_item in "1:micro:micro" "2:edit:edit" "3:fresh:fresh" "4:nvim:nvim"; do
 			num="${ed_item%%:*}"; rest="${ed_item#*:}"; key="${rest%%:*}"; label="${rest#*:}"
 			case "$key" in
 				micro) desc="modern, intuitive terminal editor" ;;
 				edit)  desc="terminal text editor (Microsoft)" ;;
 				fresh) desc="modern terminal text editor" ;;
-				helix) desc="modal editor (Kakoune-inspired)" ;;
 				nvim)  desc="Neovim" ;;
 			esac
 			if [[ ",$editor_prev," == *",${key},"* ]]; then
@@ -424,21 +421,20 @@ if $INTERACTIVE; then
 				echo "  ${num}) ${label} — ${desc}"
 			fi
 		done
-		read -rp "Selection [1,2,3,4,5/all/skip]: " editor_selection
+		read -rp "Selection [1,2,3,4/all/skip]: " editor_selection
 		if [ -z "$editor_selection" ] && [ -n "$editor_prev" ]; then
 			editor_list="$editor_prev"
 		else
 			editor_list=""
 			if [ "$editor_selection" = "all" ]; then
-				editor_list="micro,edit,fresh,helix,nvim"
+				editor_list="micro,edit,fresh,nvim"
 			elif [ -n "$editor_selection" ]; then
 				for item in $(echo "$editor_selection" | tr ',' ' '); do
 					case "$item" in
 						1) editor_list="${editor_list:+$editor_list,}micro" ;;
 						2) editor_list="${editor_list:+$editor_list,}edit" ;;
 						3) editor_list="${editor_list:+$editor_list,}fresh" ;;
-						4) editor_list="${editor_list:+$editor_list,}helix" ;;
-						5) editor_list="${editor_list:+$editor_list,}nvim" ;;
+						4) editor_list="${editor_list:+$editor_list,}nvim" ;;
 					esac
 				done
 			fi
@@ -469,21 +465,6 @@ install_fresh() {
 	run_with_spinner "Installing Fresh v${FRESH_VERSION}..." sb_install fresh "$FRESH_VERSION"
 }
 
-_install_helix_inner() {
-	if sudo -n true 2>/dev/null; then
-		sudo apt-get update -qq && sudo apt-get install -y -qq xz-utils >/dev/null 2>&1
-	elif ! command -v xz &>/dev/null; then
-		echo "Error: xz-utils required for Helix but sudo unavailable to install it. Skipping Helix." >&2
-		return 1
-	fi
-	sb_install helix "$HELIX_VERSION"
-}
-
-install_helix() {
-	if command -v hx &>/dev/null; then echo "Helix already installed, skipping."; return 0; fi
-	run_with_spinner "Installing Helix v${HELIX_VERSION}..." _install_helix_inner
-}
-
 install_nvim() {
 	if command -v nvim &>/dev/null; then echo "Neovim already installed, skipping."; return 0; fi
 	run_with_spinner "Installing Neovim v${NVIM_VERSION}..." sb_install nvim "$NVIM_VERSION"
@@ -495,7 +476,6 @@ for editor in $(echo "$editor_list" | tr ',' ' '); do
 		micro) install_micro && installed_editors+=("micro") || echo "Warning: Micro installation failed." ;;
 		edit) install_edit && installed_editors+=("edit") || echo "Warning: Edit installation failed." ;;
 		fresh) install_fresh && installed_editors+=("fresh") || echo "Warning: Fresh installation failed." ;;
-		helix) install_helix && installed_editors+=("hx") || echo "Warning: Helix installation failed." ;;
 		nvim) install_nvim && installed_editors+=("nvim") || echo "Warning: Neovim installation failed." ;;
 	esac
 done
