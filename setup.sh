@@ -695,7 +695,7 @@ install_dotnet() {
 	echo "Installing .NET..."
 	# Trust boundary: the .NET install script manages its own binary fetching
 	# and verification. We rely on HTTPS for script integrity.
-	curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel LTS 2>&1 | grep -E '^dotnet-install: (Installed|.*finished)' || true
+	curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel LTS >/dev/null 2>&1
 	if ! grep -q 'DOTNET_ROOT' ~/.squarebox-sdk-paths 2>/dev/null; then
 		cat <<'PATHS' >> ~/.squarebox-sdk-paths
 export DOTNET_ROOT="$HOME/.dotnet"
