@@ -130,6 +130,7 @@ yazi_current() { yazi --version 2>/dev/null | head -1 | awk '{print $2}' || echo
 starship_current() { starship --version 2>/dev/null | head -1 | awk '{print $2}' || echo "not installed"; }
 ghdash_current() { local ver; ver=$(gh-dash --version 2>/dev/null | grep -oP 'module version: v\K[\d.]+' | head -1) || ver="not installed"; echo "$ver"; }
 glow_current() { glow --version 2>/dev/null | head -1 | grep -oP '[\d.]+' | head -1 || echo "not installed"; }
+gum_current() { gum --version 2>/dev/null | head -1 | grep -oP '[\d.]+' | head -1 || echo "not installed"; }
 micro_current() { micro --version 2>/dev/null | head -1 | awk '{print $2}' || echo "not installed"; }
 fresh_current() { fresh --version 2>/dev/null | grep -oP '[\d.]+' | head -1 || echo "not installed"; }
 edit_current() { edit --version 2>/dev/null | grep -oP '[\d.]+' | head -1 || echo "not installed"; }
@@ -182,8 +183,8 @@ edit_prepare_asset_version() {
 
 # ── Tool registry ──────────────────────────────────────────────────────
 
-TOOLS=(delta yq lazygit xh yazi starship ghdash glow micro fresh edit helix nvim opencode zellij)
-TOOL_DISPLAY_NAMES=(delta yq lazygit xh yazi starship gh-dash glow micro fresh edit helix nvim opencode zellij)
+TOOLS=(delta yq lazygit xh yazi starship ghdash glow gum micro fresh edit helix nvim opencode zellij)
+TOOL_DISPLAY_NAMES=(delta yq lazygit xh yazi starship gh-dash glow gum micro fresh edit helix nvim opencode zellij)
 
 # Map display names to tools.yaml names (ghdash → gh-dash)
 yaml_name() {
@@ -207,7 +208,7 @@ usage() {
 	  sqrbx-update --help       Show this help
 
 	${BOLD}Tools:${RESET}
-	  delta, yq, lazygit, xh, yazi, starship, gh-dash, glow, micro, fresh, edit, helix, nvim, opencode, zellij
+	  delta, yq, lazygit, xh, yazi, starship, gh-dash, glow, gum, micro, fresh, edit, helix, nvim, opencode, zellij
 
 	${DIM}Set GITHUB_TOKEN to avoid API rate limits.${RESET}
 	EOF
