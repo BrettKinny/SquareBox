@@ -97,6 +97,15 @@ else
 fi
 echo
 
+# Debug: container-side state
+echo "[debug:setup] INTERACTIVE=${INTERACTIVE} HAS_GUM=${HAS_GUM}"
+echo "[debug:setup] stdin is terminal: $([ -t 0 ] && echo yes || echo no)"
+echo "[debug:setup] git user.name: '$(git config --global user.name 2>/dev/null || true)'"
+echo "[debug:setup] git user.email: '$(git config --global user.email 2>/dev/null || true)'"
+echo "[debug:setup] git config files:" && git config --global --list --show-origin 2>/dev/null || echo "[debug:setup] no global git config found"
+echo "[debug:setup] ~/.config/git/config exists: $([ -f ~/.config/git/config ] && echo yes || echo no)"
+[ -f ~/.config/git/config ] && echo "[debug:setup] contents:" && cat ~/.config/git/config
+
 # Git identity
 if [ -z "$(git config --global user.name 2>/dev/null)" ]; then
 	if $INTERACTIVE; then

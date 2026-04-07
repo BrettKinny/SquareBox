@@ -102,6 +102,16 @@ _host_email="$(git config --global user.email 2>/dev/null || true)"
 [ -n "$_host_name" ] && git config --file "$_git_cfg" user.name "$_host_name"
 [ -n "$_host_email" ] && git config --file "$_git_cfg" user.email "$_host_email"
 
+# Debug: show git identity propagation and environment state
+echo "[debug] HOME=${HOME}"
+echo "[debug] SHELL=${SHELL:-unset} MSYSTEM=${MSYSTEM:-unset} TERM_PROGRAM=${TERM_PROGRAM:-unset}"
+echo "[debug] host git user.name: '${_host_name}'"
+echo "[debug] host git user.email: '${_host_email}'"
+echo "[debug] git config files: $(git config --global --list --show-origin 2>/dev/null | head -5 || echo 'none found')"
+echo "[debug] ~/.gitconfig exists: $([ -f "${HOME}/.gitconfig" ] && echo yes || echo no)"
+echo "[debug] ~/.config/git/config exists: $([ -f "$_git_cfg" ] && echo yes || echo no)"
+[ -f "$_git_cfg" ] && echo "[debug] ~/.config/git/config contents:" && cat "$_git_cfg"
+
 # Migrate from old layout if needed
 if [ -d "${HOME}/squarebox-workspace" ] && [ ! -d "${INSTALL_DIR}/workspace" ]; then
 	echo "Migrating ~/squarebox-workspace to ~/squarebox/workspace..."
@@ -130,12 +140,19 @@ docker create -it --name "$CONTAINER_NAME" \
 	"${DOCKER_VOLUMES[@]}" \
 	"$IMAGE_NAME" > /dev/null
 
+# Debug: TTY state
+echo "[debug] stdin is terminal: $([ -t 0 ] && echo yes || echo no)"
+echo "[debug] stdout is terminal: $([ -t 1 ] && echo yes || echo no)"
+echo "[debug] /dev/tty exists: $([ -e /dev/tty ] && echo yes || echo no)"
+echo "[debug] DOCKER_START='${DOCKER_START}'"
+
 if [ -t 0 ]; then
-	# stdin is already a terminal — use docker_interactive for mintty/winpty handling
+	echo "[debug] taking branch: stdin is terminal"
 	docker_interactive start -ai "$CONTAINER_NAME"
 elif [ -t 1 ] && [ -e /dev/tty ]; then
-	# stdout is a terminal but stdin is piped (e.g. curl | bash) — redirect from /dev/tty
+	echo "[debug] taking branch: stdin piped, using /dev/tty"
 	docker_interactive start -ai "$CONTAINER_NAME" </dev/tty
 else
+	echo "[debug] taking branch: non-interactive"
 	echo "Install complete. Run 'squarebox' (or 'sqrbx') to start (you may need to restart your shell first)."
 fi
