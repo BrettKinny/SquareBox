@@ -7,6 +7,7 @@ editors, and sensible defaults, all in a reproducible Docker container you can
 spin up on any machine.
 
 ![squarebox first-run setup](https://raw.githubusercontent.com/SquareWaveSystems/squarebox/demo/demo/squarebox-setup.gif)
+*For demonstration purposes only — actual setup may involve more staring at the screen.*
 
 Prerequisites
 -------------
