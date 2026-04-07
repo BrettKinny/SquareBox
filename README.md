@@ -8,7 +8,7 @@ spin up on any machine.
 
 ![squarebox first-run setup](https://raw.githubusercontent.com/SquareWaveSystems/squarebox/demo/demo/squarebox-setup.gif)
 
-![SquareBox first-run setup](demo/squarebox-setup.webp)
+*Dramatisation. Actual install times may vary. No containers were harmed in the making of this GIF.*
 
 Prerequisites
 -------------
