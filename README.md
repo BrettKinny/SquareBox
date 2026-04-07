@@ -48,6 +48,7 @@ What's included
 | [fzf](https://github.com/junegunn/fzf) | Go | Fuzzy finder |
 | [gh](https://github.com/cli/cli) | Go | GitHub CLI |
 | [glow](https://github.com/charmbracelet/glow) | Go | Terminal markdown renderer |
+| [gum](https://github.com/charmbracelet/gum) | Go | Tool for shell scripts and dotfiles |
 | [jq](https://github.com/jqlang/jq) | C | JSON processor |
 | [nano](https://nano-editor.org) | C | Default text editor |
 | [ripgrep](https://github.com/BurntSushi/ripgrep) | Rust | Fast recursive grep |
