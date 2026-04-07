@@ -90,6 +90,20 @@ Installed during first-run setup. Nano is always available as the default editor
 | [helix](https://github.com/helix-editor/helix) | Rust | Modal editor (Kakoune-inspired) |
 | [nvim](https://github.com/neovim/neovim) | C/Lua | Neovim |
 
+### Terminal Multiplexers (optional)
+
+Installed during first-run setup. Choose either, both, or neither:
+
+| Name | Description |
+|------|-------------|
+| [tmux](https://github.com/tmux/tmux) | Classic terminal multiplexer |
+| [zellij](https://github.com/zellij-org/zellij) | Friendly terminal workspace |
+
+Tmux ships with [Omarchy](https://omarchy.com)-inspired defaults (`~/.config/tmux/tmux.conf`):
+`Ctrl+Space` prefix, vi copy mode, `Alt+1-9` window switching, `Ctrl+Alt+Arrow`
+pane navigation, top status bar with blue theme, 50k history, and modern terminal
+settings (RGB, clipboard passthrough).
+
 ### Aliases
 
 Inspired by [Omarchy](https://omarchy.com).
