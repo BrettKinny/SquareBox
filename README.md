@@ -13,7 +13,8 @@ Prerequisites
 -------------
 
 - [Docker](https://docs.docker.com/get-docker/)
-- [Git](https://git-scm.com/)
+- [Git](https://git-scm.com/) — on Windows, install [Git for Windows](https://gitforwindows.org/)
+  (provides `bash` and `winpty` needed by the install script)
 
 Install
 -------

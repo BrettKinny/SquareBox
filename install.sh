@@ -2,6 +2,20 @@
 set -euo pipefail
 
 REPO="https://github.com/SquareWaveSystems/squarebox.git"
+
+# On Windows/mintty (Git Bash), docker needs winpty for interactive TTY
+# passthrough. mintty uses named pipes instead of the Windows Console API,
+# which breaks interactive docker commands. winpty bridges the gap.
+# PowerShell and CMD work natively — this only activates in MSYS2/mintty.
+docker_interactive() {
+    if [[ -n "${MSYSTEM:-}" || "${TERM_PROGRAM:-}" == "mintty" ]] \
+        && command -v winpty &>/dev/null; then
+        winpty docker "$@"
+    else
+        docker "$@"
+    fi
+}
+
 INSTALL_DIR="${HOME}/squarebox"
 IMAGE_NAME="squarebox"
 CONTAINER_NAME="squarebox"
@@ -42,15 +56,23 @@ case "${SHELL:-}" in
 	*)     SHELL_RC="${HOME}/.bashrc" ;;
 esac
 
+# Determine docker start command (winpty needed on mintty/MSYS2)
+if [[ -n "${MSYSTEM:-}" || "${TERM_PROGRAM:-}" == "mintty" ]] \
+    && command -v winpty &>/dev/null; then
+	DOCKER_START="winpty docker start -ai squarebox"
+else
+	DOCKER_START="docker start -ai squarebox"
+fi
+
 ALIASES_ADDED=false
 
 if ! grep -q 'alias sqrbx=' "$SHELL_RC" 2>/dev/null; then
-	echo "alias sqrbx='docker start -ai squarebox'" >> "$SHELL_RC"
+	echo "alias sqrbx='${DOCKER_START}'" >> "$SHELL_RC"
 	ALIASES_ADDED=true
 fi
 
 if ! grep -q 'alias squarebox=' "$SHELL_RC" 2>/dev/null; then
-	echo "alias squarebox='docker start -ai squarebox'" >> "$SHELL_RC"
+	echo "alias squarebox='${DOCKER_START}'" >> "$SHELL_RC"
 	ALIASES_ADDED=true
 fi
 
@@ -69,7 +91,16 @@ if [ "$ALIASES_ADDED" = true ]; then
 fi
 
 # Prepare host directories
-mkdir -p ~/.config/git "${INSTALL_DIR}/workspace" "${INSTALL_DIR}/.config/lazygit"
+mkdir -p "${HOME}/.config/git" "${INSTALL_DIR}/workspace" "${INSTALL_DIR}/.config/lazygit"
+
+# Propagate host git identity into the container's config directory.
+# This avoids fragile file mounts on Windows/MSYS2 and prevents leaking
+# credential helpers or tokens from the host's full git config.
+_git_cfg="${HOME}/.config/git/config"
+_host_name="$(git config --global user.name 2>/dev/null || true)"
+_host_email="$(git config --global user.email 2>/dev/null || true)"
+[ -n "$_host_name" ] && git config --file "$_git_cfg" user.name "$_host_name"
+[ -n "$_host_email" ] && git config --file "$_git_cfg" user.email "$_host_email"
 
 # Migrate from old layout if needed
 if [ -d "${HOME}/squarebox-workspace" ] && [ ! -d "${INSTALL_DIR}/workspace" ]; then
@@ -88,29 +119,23 @@ fi
 echo "Creating container..."
 DOCKER_VOLUMES=(
 	-v "${INSTALL_DIR}/workspace:/workspace"
-	-v ~/.ssh:/home/dev/.ssh:ro
-	-v ~/.config/git:/home/dev/.config/git
+	-v "${HOME}/.ssh:/home/dev/.ssh:ro"
+	-v "${HOME}/.config/git:/home/dev/.config/git"
 	-v "${INSTALL_DIR}/.config/starship.toml:/home/dev/.config/starship.toml"
 	-v "${INSTALL_DIR}/.config/lazygit:/home/dev/.config/lazygit"
 	-v /etc/localtime:/etc/localtime:ro
 )
-
-# On Windows, git config lives at ~/.gitconfig rather than ~/.config/git/config.
-# Mount it read-only so the container can see the host's git identity.
-if [ -f ~/.gitconfig ]; then
-	DOCKER_VOLUMES+=(-v ~/.gitconfig:/home/dev/.gitconfig:ro)
-fi
 
 docker create -it --name "$CONTAINER_NAME" \
 	"${DOCKER_VOLUMES[@]}" \
 	"$IMAGE_NAME" > /dev/null
 
 if [ -t 0 ]; then
-	# stdin is already a terminal — use it directly (avoids /dev/tty issues on Windows/mintty)
-	docker start -ai "$CONTAINER_NAME"
+	# stdin is already a terminal — use docker_interactive for mintty/winpty handling
+	docker_interactive start -ai "$CONTAINER_NAME"
 elif [ -t 1 ] && [ -e /dev/tty ]; then
 	# stdout is a terminal but stdin is piped (e.g. curl | bash) — redirect from /dev/tty
-	docker start -ai "$CONTAINER_NAME" </dev/tty
+	docker_interactive start -ai "$CONTAINER_NAME" </dev/tty
 else
 	echo "Install complete. Run 'squarebox' (or 'sqrbx') to start (you may need to restart your shell first)."
 fi
