@@ -96,21 +96,25 @@ mkdir -p "${HOME}/.config/git" "${INSTALL_DIR}/workspace" "${INSTALL_DIR}/.confi
 # Propagate host git identity into the container's config directory.
 # This avoids fragile file mounts on Windows/MSYS2 and prevents leaking
 # credential helpers or tokens from the host's full git config.
+#
+# On MSYS2/Git Bash, HOME may point to the MSYS home (/home/user) rather than
+# the Windows profile (C:/Users/user), so git config --global misses the real
+# gitconfig. Fall back to reading from the Windows profile path via USERPROFILE.
 _git_cfg="${HOME}/.config/git/config"
+
 _host_name="$(git config --global user.name 2>/dev/null || true)"
 _host_email="$(git config --global user.email 2>/dev/null || true)"
+
+if [ -z "$_host_name" ] && [ -n "${USERPROFILE:-}" ]; then
+	_win_gitcfg="$(cygpath -u "$USERPROFILE" 2>/dev/null || echo "$USERPROFILE")/.gitconfig"
+	if [ -f "$_win_gitcfg" ]; then
+		_host_name="$(git config --file "$_win_gitcfg" user.name 2>/dev/null || true)"
+		_host_email="$(git config --file "$_win_gitcfg" user.email 2>/dev/null || true)"
+	fi
+fi
+
 [ -n "$_host_name" ] && git config --file "$_git_cfg" user.name "$_host_name"
 [ -n "$_host_email" ] && git config --file "$_git_cfg" user.email "$_host_email"
-
-# Debug: show git identity propagation and environment state
-echo "[debug] HOME=${HOME}"
-echo "[debug] SHELL=${SHELL:-unset} MSYSTEM=${MSYSTEM:-unset} TERM_PROGRAM=${TERM_PROGRAM:-unset}"
-echo "[debug] host git user.name: '${_host_name}'"
-echo "[debug] host git user.email: '${_host_email}'"
-echo "[debug] git config files: $(git config --global --list --show-origin 2>/dev/null | head -5 || echo 'none found')"
-echo "[debug] ~/.gitconfig exists: $([ -f "${HOME}/.gitconfig" ] && echo yes || echo no)"
-echo "[debug] ~/.config/git/config exists: $([ -f "$_git_cfg" ] && echo yes || echo no)"
-[ -f "$_git_cfg" ] && echo "[debug] ~/.config/git/config contents:" && cat "$_git_cfg"
 
 # Migrate from old layout if needed
 if [ -d "${HOME}/squarebox-workspace" ] && [ ! -d "${INSTALL_DIR}/workspace" ]; then
@@ -140,19 +144,8 @@ docker create -it --name "$CONTAINER_NAME" \
 	"${DOCKER_VOLUMES[@]}" \
 	"$IMAGE_NAME" > /dev/null
 
-# Debug: TTY state
-echo "[debug] stdin is terminal: $([ -t 0 ] && echo yes || echo no)"
-echo "[debug] stdout is terminal: $([ -t 1 ] && echo yes || echo no)"
-echo "[debug] /dev/tty exists: $([ -e /dev/tty ] && echo yes || echo no)"
-echo "[debug] DOCKER_START='${DOCKER_START}'"
-
 if [ -t 0 ]; then
-	echo "[debug] taking branch: stdin is terminal"
 	docker_interactive start -ai "$CONTAINER_NAME"
-elif [ -t 1 ] && [ -e /dev/tty ]; then
-	echo "[debug] taking branch: stdin piped, using /dev/tty"
-	docker_interactive start -ai "$CONTAINER_NAME" </dev/tty
 else
-	echo "[debug] taking branch: non-interactive"
 	echo "Install complete. Run 'squarebox' (or 'sqrbx') to start (you may need to restart your shell first)."
 fi
