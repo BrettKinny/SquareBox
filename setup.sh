@@ -449,18 +449,41 @@ install_nvim() {
 	sb_install nvim "$NVIM_VERSION"
 }
 
-editor_cmd=""
+installed_editors=()
 for editor in $(echo "$editor_list" | tr ',' ' '); do
 	case "$editor" in
-		micro) install_micro; [ -z "$editor_cmd" ] && editor_cmd="micro" ;;
-		edit) install_edit; [ -z "$editor_cmd" ] && editor_cmd="edit" ;;
-		fresh) install_fresh; [ -z "$editor_cmd" ] && editor_cmd="fresh" ;;
-		helix) install_helix && { [ -z "$editor_cmd" ] && editor_cmd="hx"; true; } || echo "Warning: Helix installation failed, skipping." ;;
-		nvim) install_nvim; [ -z "$editor_cmd" ] && editor_cmd="nvim" ;;
+		micro) install_micro && installed_editors+=("micro") ;;
+		edit) install_edit && installed_editors+=("edit") ;;
+		fresh) install_fresh && installed_editors+=("fresh") ;;
+		helix) install_helix && installed_editors+=("hx") || echo "Warning: Helix installation failed, skipping." ;;
+		nvim) install_nvim && installed_editors+=("nvim") ;;
 	esac
 done
 
-# Set EDITOR to the first selected editor
+# Prompt for default editor if multiple were installed
+editor_cmd=""
+if [ ${#installed_editors[@]} -gt 1 ] && $INTERACTIVE; then
+	echo
+	if $HAS_GUM; then
+		editor_cmd=$(gum choose --header "Select default editor (\$EDITOR):" \
+			"nano" "${installed_editors[@]}") || true
+	else
+		echo "Select default editor (\$EDITOR):"
+		echo "  0) nano"
+		for i in "${!installed_editors[@]}"; do
+			echo "  $((i+1))) ${installed_editors[$i]}"
+		done
+		read -rp "Selection [0-${#installed_editors[@]}]: " ed_sel
+		if [ -n "$ed_sel" ] && [ "$ed_sel" -ge 1 ] 2>/dev/null && [ "$ed_sel" -le ${#installed_editors[@]} ]; then
+			editor_cmd="${installed_editors[$((ed_sel-1))]}"
+		fi
+	fi
+	[ "$editor_cmd" = "nano" ] && editor_cmd=""
+elif [ ${#installed_editors[@]} -eq 1 ]; then
+	editor_cmd="${installed_editors[0]}"
+fi
+
+# Set EDITOR (nano is the default if nothing chosen)
 {
 	if [ -n "$editor_cmd" ]; then
 		echo "export EDITOR='$editor_cmd'"
