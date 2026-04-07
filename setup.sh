@@ -520,7 +520,7 @@ fi
 
 if $INTERACTIVE; then
 	echo
-	section_header "Terminal Multiplexer"
+	section_header "Terminal Multiplexers"
 	if $HAS_GUM; then
 		# Build --selected from previously saved multiplexers
 		gum_selected=""
