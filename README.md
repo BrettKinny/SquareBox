@@ -1,12 +1,12 @@
 # 🟧📦 squarebox
 
-**A containerized dev environment packed with modern CLI/TUI tools and AI coding assistants.**
+**Containerised dev environment packed with modern CLI/TUI tools and AI coding assistants. Batteries included.**
 
 Curated Rust/Go replacements for everyday Unix tools, multiple AI-powered
-editors, and sensible defaults — all in a reproducible Docker container you can
+editors, and sensible defaults, all in a reproducible Docker container you can
 spin up on any machine.
 
-![squarebox first-run setup](https://raw.githubusercontent.com/SquareWaveSystems/squarebox/demo/demo/squarebox-setup.webp)
+![squarebox first-run setup](https://raw.githubusercontent.com/SquareWaveSystems/squarebox/demo/demo/squarebox-setup.gif)
 
 ![SquareBox first-run setup](demo/squarebox-setup.webp)
 
@@ -30,7 +30,7 @@ Start
 
     squarebox        # or: sqrbx
 
-The container is persistent — it suspends on exit and resumes on start, keeping
+The container is persistent: it suspends on exit and resumes on start, keeping
 installed packages, config, and shell history intact between sessions. Your code
 lives on the host at `~/squarebox/workspace` via volume mount, so it survives
 even if the container is deleted.
@@ -50,6 +50,7 @@ What's included
 | [fzf](https://github.com/junegunn/fzf) | Go | Fuzzy finder |
 | [gh](https://github.com/cli/cli) | Go | GitHub CLI |
 | [glow](https://github.com/charmbracelet/glow) | Go | Terminal markdown renderer |
+| [gum](https://github.com/charmbracelet/gum) | Go | Tool for shell scripts and dotfiles |
 | [jq](https://github.com/jqlang/jq) | C | JSON processor |
 | [nano](https://nano-editor.org) | C | Default text editor |
 | [ripgrep](https://github.com/BurntSushi/ripgrep) | Rust | Fast recursive grep |
@@ -68,12 +69,17 @@ What's included
 
 ### AI Coding Assistants (optional)
 
-Installed during first-run setup — choose one or both:
+Installed during first-run setup. Choose any combination:
 
 | Name | Language | Description |
 |------|----------|-------------|
 | [Claude Code](https://github.com/anthropics/claude-code) | TypeScript | AI coding assistant |
+| [GitHub Copilot CLI](https://github.com/githubnext/github-copilot-cli) | TypeScript | GitHub Copilot in the terminal * |
+| [Google Gemini CLI](https://github.com/google-gemini/gemini-cli) | TypeScript | Google Gemini in the terminal * |
+| [OpenAI Codex CLI](https://github.com/openai/codex) | TypeScript | OpenAI Codex in the terminal * |
 | [opencode](https://github.com/anomalyco/opencode) | Go | AI coding TUI |
+
+\* Requires Node.js (auto-installed if needed).
 
 ### Text Editors (optional)
 
@@ -89,7 +95,7 @@ Installed during first-run setup. Nano is always available as the default editor
 
 ### Aliases
 
-Inspired by [Omarchy](https://omarchy.com).
+Inspired by [Omarchy](https://omarchy.org).
 
 | Alias | Command | Description |
 |-------|---------|-------------|
@@ -104,7 +110,7 @@ Inspired by [Omarchy](https://omarchy.com).
 | `..` | `cd ..` | Go up one directory |
 | `...` | `cd ../..` | Go up two directories |
 | `....` | `cd ../../..` | Go up three directories |
-| `c` | `claude` or `opencode` | Launch selected AI assistant |
+| `c` | first selected AI tool | Launch selected AI assistant |
 | `g` | `git` | Git shorthand |
 | `gcm` | `git commit -m` | Commit with message |
 | `gcam` | `git commit -a -m` | Stage all and commit |
@@ -115,7 +121,7 @@ Inspired by [Omarchy](https://omarchy.com).
 
 ### SDKs (optional)
 
-Selected during first-run setup — choose any combination, all, or none:
+Selected during first-run setup. Choose any combination, all, or none:
 
 | SDK | Installed via |
 |-----|---------------|
@@ -135,7 +141,7 @@ Update
     sqrbx-update
 
 Checks all GitHub-released tools against latest versions and updates them
-in-place — no rebuild required. Your container state, SDKs, and config are
+in-place. No rebuild required. Your container state, SDKs, and config are
 preserved.
 
     sqrbx-update              # show available updates (dry run)
@@ -181,6 +187,9 @@ First-run selections add to that:
 | Component | Adds |
 |-----------|------|
 | Claude Code | ~300 MB |
+| GitHub Copilot CLI | ~50 MB |
+| Google Gemini CLI | ~50 MB |
+| OpenAI Codex CLI | ~50 MB |
 | OpenCode | ~30 MB |
 | micro / edit | ~12 / ~7 MB |
 | fresh / helix / nvim | ~10 / ~80 / ~45 MB |
@@ -197,10 +206,11 @@ Security
 
 All binary tools are pinned to specific versions and verified against SHA256
 checksums at build time. Third-party install scripts (Claude Code, uv, .NET)
-manage their own binary verification.
+manage their own binary verification. npm-based AI tools (Copilot CLI, Gemini
+CLI, Codex CLI) use npm's built-in integrity verification.
 
-For the full trust model — what `install.sh` does on your machine, how each
-layer is verified, and how to inspect the script before running it — see
+For the full trust model (what `install.sh` does on your machine, how each
+layer is verified, and how to inspect the script before running it) see
 [SECURITY.md](SECURITY.md).
 
 Devcontainer / Codespaces

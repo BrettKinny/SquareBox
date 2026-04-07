@@ -11,6 +11,24 @@ trap cleanup EXIT
 
 SETUP_CHECKSUMS="${HOME}/setup-checksums.txt"
 
+# Fix /workspace ownership if volume mount left it owned by a different UID
+if [ -d /workspace ] && ! [ -w /workspace ]; then
+	if ! command -v sudo >/dev/null 2>&1; then
+		echo "ERROR: /workspace is not writable and sudo is not available to fix ownership." >&2
+		echo "Please make /workspace writable for user 'dev' or rerun with appropriate privileges." >&2
+		exit 1
+	elif ! sudo -n true >/dev/null 2>&1; then
+		echo "ERROR: /workspace is not writable and passwordless sudo is required to fix ownership automatically." >&2
+		echo "Please run 'sudo chown dev:dev /workspace' manually or rerun with appropriate privileges." >&2
+		exit 1
+	elif ! sudo -n chown dev:dev /workspace; then
+		echo "ERROR: Failed to change ownership of /workspace to dev:dev." >&2
+		echo "This can happen on volume types that do not allow chown." >&2
+		echo "Please make /workspace writable for user 'dev' or adjust the mount configuration and try again." >&2
+		exit 1
+	fi
+fi
+
 # Verify SHA256 checksum of a downloaded file against the checksums file.
 # Usage: verify_checksum <file> <artifact-name>
 verify_checksum() {
@@ -112,61 +130,79 @@ mkdir -p /workspace/.squarebox ~/.local/bin
 ai_prev=""
 if [ -f "$AI_CONFIG" ]; then
 	ai_prev=$(cat "$AI_CONFIG")
+	# Migrate legacy single-choice values
+	case "$ai_prev" in
+		both) ai_prev="claude,opencode" ;;
+	esac
 fi
 
 if $INTERACTIVE; then
-	case "$ai_prev" in
-		claude)   ai_default_label="Claude Code" ;;
-		opencode) ai_default_label="OpenCode" ;;
-		both)     ai_default_label="Both" ;;
-		*)        ai_default_label="" ;;
-	esac
-
 	echo
 	if $HAS_GUM; then
-		gum_args=(--header "Choose your AI coding assistant:"
-			--cursor.foreground 208 --header.foreground 208 --selected.foreground 208)
-		[ -n "$ai_default_label" ] && gum_args+=(--selected "$ai_default_label")
-		ai_label=$(gum choose "${gum_args[@]}" \
-			"Claude Code" "OpenCode" "Both") || true
-		case "$ai_label" in
-			"Claude Code") ai_choice="claude" ;;
-			"OpenCode")    ai_choice="opencode" ;;
-			"Both")        ai_choice="both" ;;
-			*)             echo "No selection, defaulting to Claude Code"; ai_choice="claude" ;;
-		esac
+		# Build --selected from previously saved AI tools
+		gum_selected=""
+		for ai in $(echo "$ai_prev" | tr ',' ' '); do
+			case "$ai" in
+				claude)   gum_selected="${gum_selected:+$gum_selected,}Claude Code" ;;
+				copilot)  gum_selected="${gum_selected:+$gum_selected,}GitHub Copilot CLI" ;;
+				gemini)   gum_selected="${gum_selected:+$gum_selected,}Google Gemini CLI" ;;
+				codex)    gum_selected="${gum_selected:+$gum_selected,}OpenAI Codex CLI" ;;
+				opencode) gum_selected="${gum_selected:+$gum_selected,}OpenCode" ;;
+			esac
+		done
+		gum_args=(--no-limit --header "Select AI coding assistants (space=toggle, enter=confirm):")
+		[ -n "$gum_selected" ] && gum_args+=(--selected "$gum_selected")
+		selected=$(gum choose "${gum_args[@]}" \
+			"Claude Code" "GitHub Copilot CLI" "Google Gemini CLI" \
+			"OpenAI Codex CLI" "OpenCode") || true
+		ai_choice=""
+		while IFS= read -r line; do
+			case "$line" in
+				"Claude Code")        ai_choice="${ai_choice:+$ai_choice,}claude" ;;
+				"GitHub Copilot CLI") ai_choice="${ai_choice:+$ai_choice,}copilot" ;;
+				"Google Gemini CLI")  ai_choice="${ai_choice:+$ai_choice,}gemini" ;;
+				"OpenAI Codex CLI")   ai_choice="${ai_choice:+$ai_choice,}codex" ;;
+				"OpenCode")           ai_choice="${ai_choice:+$ai_choice,}opencode" ;;
+			esac
+		done <<< "$selected"
 	else
-		echo "Choose your AI coding assistant:"
-		if [ "$ai_prev" = "claude" ];   then echo "  1) Claude Code [current]"; else echo "  1) Claude Code"; fi
-		if [ "$ai_prev" = "opencode" ]; then echo "  2) OpenCode [current]";    else echo "  2) OpenCode"; fi
-		if [ "$ai_prev" = "both" ];     then echo "  3) Both [current]";        else echo "  3) Both"; fi
-		read -rp "Selection [1/2/3]: " selection
-		if [ -z "$selection" ] && [ -n "$ai_prev" ]; then
+		echo "Select AI coding assistants (comma-separated, 'all', or press Enter to skip):"
+		for ai_item in "1:claude:Claude Code" "2:copilot:GitHub Copilot CLI" "3:gemini:Google Gemini CLI" "4:codex:OpenAI Codex CLI" "5:opencode:OpenCode"; do
+			num="${ai_item%%:*}"; rest="${ai_item#*:}"; key="${rest%%:*}"; label="${rest#*:}"
+			if [[ ",$ai_prev," == *",${key},"* ]]; then
+				echo "  ${num}) ${label} [installed]"
+			else
+				echo "  ${num}) ${label}"
+			fi
+		done
+		read -rp "Selection [1,2,3,4,5/all/skip]: " ai_selection
+		if [ -z "$ai_selection" ] && [ -n "$ai_prev" ]; then
 			ai_choice="$ai_prev"
 		else
-			case "$selection" in
-				1) ai_choice="claude" ;;
-				2) ai_choice="opencode" ;;
-				3) ai_choice="both" ;;
-				*) echo "Invalid selection, defaulting to Claude Code"; ai_choice="claude" ;;
-			esac
+			ai_choice=""
+			if [ "$ai_selection" = "all" ]; then
+				ai_choice="claude,copilot,gemini,codex,opencode"
+			elif [ -n "$ai_selection" ]; then
+				for item in $(echo "$ai_selection" | tr ',' ' '); do
+					case "$item" in
+						1) ai_choice="${ai_choice:+$ai_choice,}claude" ;;
+						2) ai_choice="${ai_choice:+$ai_choice,}copilot" ;;
+						3) ai_choice="${ai_choice:+$ai_choice,}gemini" ;;
+						4) ai_choice="${ai_choice:+$ai_choice,}codex" ;;
+						5) ai_choice="${ai_choice:+$ai_choice,}opencode" ;;
+					esac
+				done
+			fi
 		fi
 	fi
 	echo "$ai_choice" > "$AI_CONFIG"
 elif [ -n "$ai_prev" ]; then
 	ai_choice="$ai_prev"
-	echo "Installing AI tool: $ai_choice (from previous selection)"
+	echo "Installing AI tools: $ai_choice (from previous selection)"
 else
 	echo "Defaulting to Claude Code (non-interactive)"
 	ai_choice="claude"
 	echo "$ai_choice" > "$AI_CONFIG"
-fi
-
-if [ "$ai_choice" = "claude" ] || [ "$ai_choice" = "both" ]; then
-	echo "Installing Claude Code..."
-	# Trust boundary: the Claude Code install script manages its own binary
-	# fetching and verification. We rely on HTTPS for script integrity.
-	curl -fsSL https://claude.ai/install.sh | bash
 fi
 
 # Pinned versions — update via: scripts/update-versions.sh
@@ -186,63 +222,171 @@ for _var in OPENCODE_VERSION MICRO_VERSION EDIT_VERSION EDIT_ASSET_VERSION FRESH
 	fi
 done
 
-if [ "$ai_choice" = "opencode" ] || [ "$ai_choice" = "both" ]; then
-	if command -v opencode &>/dev/null; then
-		echo "OpenCode already installed, skipping."
-	else
-		echo "Installing OpenCode v${OPENCODE_VERSION}..."
-		sb_install opencode "$OPENCODE_VERSION"
-	fi
-fi
+# Pinned SDK versions needed early (for npm-based AI tools)
+NVM_VERSION="0.40.3"
 
-# Set aliases based on selection
-{
-	if [ "$ai_choice" = "claude" ]; then
-		echo "alias c='claude'"
-		echo "alias claude-yolo='claude --dangerously-skip-permissions'"
-	elif [ "$ai_choice" = "opencode" ]; then
-		echo "alias c='opencode'"
-		echo "alias opencode-yolo='opencode --dangerously-skip-permissions'"
-	else
-		echo "alias claude-yolo='claude --dangerously-skip-permissions'"
-		echo "alias opencode-yolo='opencode --dangerously-skip-permissions'"
+# SDK path setup file (create if missing, preserve on retry)
+touch ~/.squarebox-sdk-paths
+
+install_node() {
+	if command -v node &>/dev/null; then echo "Node.js already installed, skipping."; return 0; fi
+	rm -rf "$HOME/.nvm"
+	echo "Installing Node.js (via nvm v${NVM_VERSION})..."
+	curl -fsSo /tmp/nvm-install.sh "https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh"
+	verify_checksum /tmp/nvm-install.sh "nvm-install-v${NVM_VERSION}.sh"
+	bash /tmp/nvm-install.sh >/dev/null 2>&1
+	rm /tmp/nvm-install.sh
+	export NVM_DIR="$HOME/.nvm"
+	# shellcheck source=/dev/null
+	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+	# Node.js binary verification is handled by nvm
+	nvm install --lts >/dev/null 2>&1
+	if ! grep -q 'NVM_DIR' ~/.squarebox-sdk-paths 2>/dev/null; then
+		cat <<'PATHS' >> ~/.squarebox-sdk-paths
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+PATHS
 	fi
+	if ! command -v node &>/dev/null; then
+		echo "Error: Node.js binary not found after installation" >&2
+		exit 1
+	fi
+}
+
+# Ensure Node.js is available for npm-based AI tools
+ensure_node_for_npm() {
+	if command -v node &>/dev/null; then return 0; fi
+	echo "Installing Node.js (required for npm-based AI tools)..."
+	install_node
+	# Ensure node/npm are available in this session
+	export NVM_DIR="$HOME/.nvm"
+	# shellcheck source=/dev/null
+	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+	# Persist Node.js in SDK config so it survives rebuilds
+	local sdk_cfg="/workspace/.squarebox/sdks"
+	if [ -f "$sdk_cfg" ]; then
+		local sdk_current
+		sdk_current=$(cat "$sdk_cfg")
+		if [[ ",$sdk_current," != *",node,"* ]] && [ "$sdk_current" != "node" ]; then
+			echo "${sdk_current:+$sdk_current,}node" > "$sdk_cfg"
+		fi
+	else
+		echo "node" > "$sdk_cfg"
+	fi
+}
+
+install_copilot() {
+	if command -v github-copilot-cli &>/dev/null; then echo "GitHub Copilot CLI already installed, skipping."; return 0; fi
+	ensure_node_for_npm
+	echo "Installing GitHub Copilot CLI..."
+	npm install -g --silent @githubnext/github-copilot-cli 2>/dev/null
+}
+
+install_gemini() {
+	if command -v gemini &>/dev/null; then echo "Google Gemini CLI already installed, skipping."; return 0; fi
+	ensure_node_for_npm
+	echo "Installing Google Gemini CLI..."
+	npm install -g --silent @google/gemini-cli 2>/dev/null
+}
+
+install_codex() {
+	if command -v codex &>/dev/null; then echo "OpenAI Codex CLI already installed, skipping."; return 0; fi
+	ensure_node_for_npm
+	echo "Installing OpenAI Codex CLI..."
+	npm install -g --silent @openai/codex 2>/dev/null
+}
+
+for ai_tool in $(echo "$ai_choice" | tr ',' ' '); do
+	case "$ai_tool" in
+		claude)
+			echo "Installing Claude Code..."
+			# Trust boundary: the Claude Code install script manages its own binary
+			# fetching and verification. We rely on HTTPS for script integrity.
+			curl -fsSL https://claude.ai/install.sh | bash >/dev/null 2>&1
+			;;
+		opencode)
+			if command -v opencode &>/dev/null; then
+				echo "OpenCode already installed, skipping."
+			else
+				echo "Installing OpenCode v${OPENCODE_VERSION}..."
+				sb_install opencode "$OPENCODE_VERSION"
+			fi
+			;;
+		copilot)  install_copilot ;;
+		gemini)   install_gemini ;;
+		codex)    install_codex ;;
+	esac
+done
+
+# Set aliases based on selection — c maps to first selected tool in priority order
+{
+	c_target=""
+	for ai_tool in claude copilot gemini codex opencode; do
+		if [[ ",$ai_choice," == *",$ai_tool,"* ]]; then
+			[ -z "$c_target" ] && c_target="$ai_tool"
+			case "$ai_tool" in
+				claude)   echo "alias claude-yolo='claude --dangerously-skip-permissions'" ;;
+				opencode) echo "alias opencode-yolo='opencode --dangerously-skip-permissions'" ;;
+			esac
+		fi
+	done
+	[ -n "$c_target" ] && echo "alias c='$c_target'"
 } > ~/.squarebox-ai-aliases
 
 # Text editors
 EDITOR_CONFIG="/workspace/.squarebox/editors"
 
+editor_prev=""
 if [ -f "$EDITOR_CONFIG" ]; then
-	editor_list=$(cat "$EDITOR_CONFIG")
-	[ -n "$editor_list" ] && echo "Installing editors: $editor_list (from previous selection)"
-else
-	if $INTERACTIVE; then
-		echo
-		if $HAS_GUM; then
-			echo "Nano is always available as the default editor."
-			selected=$(gum choose --no-limit \
-				--header "Select text editors to install (space=toggle, enter=confirm):" \
-				--cursor.foreground 208 --header.foreground 208 --selected.foreground 208 \
-				"micro  — modern, intuitive terminal editor" \
-				"edit   — terminal text editor (Microsoft)" \
-				"fresh  — modern terminal text editor" \
-				"helix  — modal editor (Kakoune-inspired)" \
-				"nvim   — Neovim") || true
-			editor_list=""
-			while IFS= read -r line; do
-				[ -z "$line" ] && continue
-				name="${line%% *}"
-				editor_list="${editor_list:+$editor_list,}${name}"
-			done <<< "$selected"
+	editor_prev=$(cat "$EDITOR_CONFIG")
+fi
+
+if $INTERACTIVE; then
+	echo
+	if $HAS_GUM; then
+		# Build --selected from previously saved editors
+		gum_selected=""
+		for ed in $(echo "$editor_prev" | tr ',' ' '); do
+			case "$ed" in
+				micro) gum_selected="${gum_selected:+$gum_selected,}micro" ;;
+				edit)  gum_selected="${gum_selected:+$gum_selected,}edit" ;;
+				fresh) gum_selected="${gum_selected:+$gum_selected,}fresh" ;;
+				helix) gum_selected="${gum_selected:+$gum_selected,}helix" ;;
+				nvim)  gum_selected="${gum_selected:+$gum_selected,}nvim" ;;
+			esac
+		done
+		echo "Nano is always available as the default editor."
+		gum_args=(--no-limit --header "Select text editors to install:")
+		[ -n "$gum_selected" ] && gum_args+=(--selected "$gum_selected")
+		selected=$(gum choose "${gum_args[@]}" \
+			"micro" "edit" "fresh" "helix" "nvim") || true
+		editor_list=""
+		while IFS= read -r line; do
+			[ -z "$line" ] && continue
+			editor_list="${editor_list:+$editor_list,}${line}"
+		done <<< "$selected"
+	else
+		echo "Select text editors to install (comma-separated, or 'all', or press Enter to skip):"
+		echo "  Nano is always available as the default editor."
+		for ed_item in "1:micro:micro" "2:edit:edit" "3:fresh:fresh" "4:helix:helix" "5:nvim:nvim"; do
+			num="${ed_item%%:*}"; rest="${ed_item#*:}"; key="${rest%%:*}"; label="${rest#*:}"
+			case "$key" in
+				micro) desc="modern, intuitive terminal editor" ;;
+				edit)  desc="terminal text editor (Microsoft)" ;;
+				fresh) desc="modern terminal text editor" ;;
+				helix) desc="modal editor (Kakoune-inspired)" ;;
+				nvim)  desc="Neovim" ;;
+			esac
+			if [[ ",$editor_prev," == *",${key},"* ]]; then
+				echo "  ${num}) ${label} — ${desc} [installed]"
+			else
+				echo "  ${num}) ${label} — ${desc}"
+			fi
+		done
+		read -rp "Selection [1,2,3,4,5/all/skip]: " editor_selection
+		if [ -z "$editor_selection" ] && [ -n "$editor_prev" ]; then
+			editor_list="$editor_prev"
 		else
-			echo "Select text editors to install (comma-separated, or 'all', or press Enter to skip):"
-			echo "  Nano is always available as the default editor."
-			echo "  1) micro    — modern, intuitive terminal editor"
-			echo "  2) edit     — terminal text editor (Microsoft)"
-			echo "  3) fresh    — modern terminal text editor"
-			echo "  4) helix    — modal editor (Kakoune-inspired)"
-			echo "  5) nvim     — Neovim"
-			read -rp "Selection [1,2,3,4,5/all/skip]: " editor_selection
 			editor_list=""
 			if [ "$editor_selection" = "all" ]; then
 				editor_list="micro,edit,fresh,helix,nvim"
@@ -258,10 +402,14 @@ else
 				done
 			fi
 		fi
-	else
-		echo "Skipping editor selection (non-interactive)"
-		editor_list=""
 	fi
+	echo "$editor_list" > "$EDITOR_CONFIG"
+elif [ -n "$editor_prev" ]; then
+	editor_list="$editor_prev"
+	[ -n "$editor_list" ] && echo "Installing editors: $editor_list (from previous selection)"
+else
+	echo "Skipping editor selection (non-interactive)"
+	editor_list=""
 	echo "$editor_list" > "$EDITOR_CONFIG"
 fi
 
@@ -301,18 +449,41 @@ install_nvim() {
 	sb_install nvim "$NVIM_VERSION"
 }
 
-editor_cmd=""
+installed_editors=()
 for editor in $(echo "$editor_list" | tr ',' ' '); do
 	case "$editor" in
-		micro) install_micro; [ -z "$editor_cmd" ] && editor_cmd="micro" ;;
-		edit) install_edit; [ -z "$editor_cmd" ] && editor_cmd="edit" ;;
-		fresh) install_fresh; [ -z "$editor_cmd" ] && editor_cmd="fresh" ;;
-		helix) { install_helix && [ -z "$editor_cmd" ] && editor_cmd="hx"; } || echo "Warning: Helix installation failed, skipping." ;;
-		nvim) install_nvim; [ -z "$editor_cmd" ] && editor_cmd="nvim" ;;
+		micro) install_micro && installed_editors+=("micro") ;;
+		edit) install_edit && installed_editors+=("edit") ;;
+		fresh) install_fresh && installed_editors+=("fresh") ;;
+		helix) install_helix && installed_editors+=("hx") || echo "Warning: Helix installation failed, skipping." ;;
+		nvim) install_nvim && installed_editors+=("nvim") ;;
 	esac
 done
 
-# Set EDITOR to the first selected editor
+# Prompt for default editor if multiple were installed
+editor_cmd=""
+if [ ${#installed_editors[@]} -gt 1 ] && $INTERACTIVE; then
+	echo
+	if $HAS_GUM; then
+		editor_cmd=$(gum choose --header "Select default editor (\$EDITOR):" \
+			"nano" "${installed_editors[@]}") || true
+	else
+		echo "Select default editor (\$EDITOR):"
+		echo "  0) nano"
+		for i in "${!installed_editors[@]}"; do
+			echo "  $((i+1))) ${installed_editors[$i]}"
+		done
+		read -rp "Selection [0-${#installed_editors[@]}]: " ed_sel
+		if [ -n "$ed_sel" ] && [ "$ed_sel" -ge 1 ] 2>/dev/null && [ "$ed_sel" -le ${#installed_editors[@]} ]; then
+			editor_cmd="${installed_editors[$((ed_sel-1))]}"
+		fi
+	fi
+	[ "$editor_cmd" = "nano" ] && editor_cmd=""
+elif [ ${#installed_editors[@]} -eq 1 ]; then
+	editor_cmd="${installed_editors[0]}"
+fi
+
+# Set EDITOR (nano is the default if nothing chosen)
 {
 	if [ -n "$editor_cmd" ]; then
 		echo "export EDITOR='$editor_cmd'"
@@ -322,29 +493,45 @@ done
 # Terminal multiplexer
 MUX_CONFIG="/workspace/.squarebox/multiplexer"
 
+mux_prev=""
 if [ -f "$MUX_CONFIG" ]; then
-	mux_list=$(cat "$MUX_CONFIG")
-	[ -n "$mux_list" ] && echo "Installing multiplexer(s): $mux_list (from previous selection)"
-else
-	if $INTERACTIVE; then
-		echo
-		if $HAS_GUM; then
-			selected=$(gum choose --no-limit \
-				--header "Select terminal multiplexer (space=toggle, enter=confirm, or enter to skip):" \
-				--cursor.foreground 208 --header.foreground 208 --selected.foreground 208 \
-				"tmux    — classic terminal multiplexer" \
-				"zellij  — friendly terminal workspace") || true
-			mux_list=""
-			while IFS= read -r line; do
-				[ -z "$line" ] && continue
-				name="${line%% *}"
-				mux_list="${mux_list:+$mux_list,}${name}"
-			done <<< "$selected"
+	mux_prev=$(cat "$MUX_CONFIG")
+fi
+
+if $INTERACTIVE; then
+	echo
+	if $HAS_GUM; then
+		# Build --selected from previously saved multiplexers
+		gum_selected=""
+		for mux in $(echo "$mux_prev" | tr ',' ' '); do
+			case "$mux" in
+				tmux)   gum_selected="${gum_selected:+$gum_selected,}tmux" ;;
+				zellij) gum_selected="${gum_selected:+$gum_selected,}zellij" ;;
+			esac
+		done
+		gum_args=(--no-limit --header "Select terminal multiplexer:")
+		[ -n "$gum_selected" ] && gum_args+=(--selected "$gum_selected")
+		selected=$(gum choose "${gum_args[@]}" \
+			"tmux" "zellij") || true
+		mux_list=""
+		while IFS= read -r line; do
+			[ -z "$line" ] && continue
+			mux_list="${mux_list:+$mux_list,}${line}"
+		done <<< "$selected"
+	else
+		echo "Select terminal multiplexer (comma-separated, or 'all', or press Enter to skip):"
+		for mux_item in "1:tmux:classic terminal multiplexer" "2:zellij:friendly terminal workspace"; do
+			num="${mux_item%%:*}"; rest="${mux_item#*:}"; key="${rest%%:*}"; desc="${rest#*:}"
+			if [[ ",$mux_prev," == *",${key},"* ]]; then
+				echo "  ${num}) ${key} — ${desc} [installed]"
+			else
+				echo "  ${num}) ${key} — ${desc}"
+			fi
+		done
+		read -rp "Selection [1,2/all/skip]: " mux_selection
+		if [ -z "$mux_selection" ] && [ -n "$mux_prev" ]; then
+			mux_list="$mux_prev"
 		else
-			echo "Select terminal multiplexer (comma-separated, or 'all', or press Enter to skip):"
-			echo "  1) tmux    — classic terminal multiplexer"
-			echo "  2) zellij  — friendly terminal workspace"
-			read -rp "Selection [1,2/all/skip]: " mux_selection
 			mux_list=""
 			if [ "$mux_selection" = "all" ]; then
 				mux_list="tmux,zellij"
@@ -357,10 +544,14 @@ else
 				done
 			fi
 		fi
-	else
-		echo "Skipping multiplexer selection (non-interactive)"
-		mux_list=""
 	fi
+	echo "$mux_list" > "$MUX_CONFIG"
+elif [ -n "$mux_prev" ]; then
+	mux_list="$mux_prev"
+	[ -n "$mux_list" ] && echo "Installing multiplexer(s): $mux_list (from previous selection)"
+else
+	echo "Skipping multiplexer selection (non-interactive)"
+	mux_list=""
 	echo "$mux_list" > "$MUX_CONFIG"
 fi
 
@@ -415,8 +606,7 @@ if $INTERACTIVE; then
 				dotnet) gum_selected="${gum_selected:+$gum_selected,}.NET" ;;
 			esac
 		done
-		gum_args=(--no-limit --header "Select SDKs to install (space=toggle, enter=confirm):"
-			--cursor.foreground 208 --header.foreground 208 --selected.foreground 208)
+		gum_args=(--no-limit --header "Select SDKs to install:")
 		[ -n "$gum_selected" ] && gum_args+=(--selected "$gum_selected")
 		selected=$(gum choose "${gum_args[@]}" \
 			"Node.js" "Python" "Go" ".NET") || true
@@ -432,7 +622,7 @@ if $INTERACTIVE; then
 		# Empty gum output means nothing selected
 		[ -z "$selected" ] && sdk_list=""
 	else
-		echo "Select SDKs to install (comma-separated, or 'all', or 'none'):"
+		echo "Select SDKs to install (comma-separated, 'all', or 'none' to skip):"
 		for sdk_item in "1:node:Node.js" "2:python:Python" "3:go:Go" "4:dotnet:.NET"; do
 			num="${sdk_item%%:*}"; rest="${sdk_item#*:}"; key="${rest%%:*}"; label="${rest#*:}"
 			if [[ ",$sdk_prev," == *",${key},"* ]]; then
@@ -472,51 +662,24 @@ else
 	echo "$sdk_list" > "$SDK_CONFIG"
 fi
 
-# SDK path setup file (create if missing, preserve on retry)
-touch ~/.squarebox-sdk-paths
-
 # Pinned versions — update via: scripts/update-versions.sh
-NVM_VERSION="0.40.3"
 GO_VERSION="go1.26.1"
 
-for _var in NVM_VERSION GO_VERSION; do
+for _var in GO_VERSION; do
 	if [ -z "${!_var:-}" ]; then
 		echo "Error: ${_var} is empty or unset" >&2
 		exit 1
 	fi
 done
 
-install_node() {
-	if command -v node &>/dev/null; then echo "Node.js already installed, skipping."; return 0; fi
-	rm -rf "$HOME/.nvm"
-	echo "Installing Node.js (via nvm v${NVM_VERSION})..."
-	curl -fsSo /tmp/nvm-install.sh "https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh"
-	verify_checksum /tmp/nvm-install.sh "nvm-install-v${NVM_VERSION}.sh"
-	bash /tmp/nvm-install.sh
-	rm /tmp/nvm-install.sh
-	export NVM_DIR="$HOME/.nvm"
-	# shellcheck source=/dev/null
-	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-	# Node.js binary verification is handled by nvm
-	nvm install --lts
-	if ! grep -q 'NVM_DIR' ~/.squarebox-sdk-paths 2>/dev/null; then
-		cat <<'PATHS' >> ~/.squarebox-sdk-paths
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-PATHS
-	fi
-	if ! command -v node &>/dev/null; then
-		echo "Error: Node.js binary not found after installation" >&2
-		exit 1
-	fi
-}
+# install_node is defined earlier (needed by npm-based AI tools)
 
 install_python() {
 	if command -v uv &>/dev/null; then echo "uv already installed, skipping."; return 0; fi
 	echo "Installing Python (via uv)..."
 	# Trust boundary: the uv install script manages its own binary fetching
 	# and verification. We rely on HTTPS for script integrity.
-	curl -fsSL https://astral.sh/uv/install.sh | bash
+	curl -fsSL https://astral.sh/uv/install.sh | bash &>/dev/null
 	if ! grep -q '\.local/bin' ~/.squarebox-sdk-paths 2>/dev/null; then
 		cat <<'PATHS' >> ~/.squarebox-sdk-paths
 export PATH="$HOME/.local/bin:$PATH"
@@ -555,7 +718,7 @@ install_dotnet() {
 	echo "Installing .NET..."
 	# Trust boundary: the .NET install script manages its own binary fetching
 	# and verification. We rely on HTTPS for script integrity.
-	curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel LTS
+	curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel LTS >/dev/null 2>&1
 	if ! grep -q 'DOTNET_ROOT' ~/.squarebox-sdk-paths 2>/dev/null; then
 		cat <<'PATHS' >> ~/.squarebox-sdk-paths
 export DOTNET_ROOT="$HOME/.dotnet"
@@ -578,4 +741,5 @@ for sdk in $(echo "$sdk_list" | tr ',' ' '); do
 done
 
 echo
-echo "Done. Ready to go."
+
+echo "🟧📦 You're in the box."
