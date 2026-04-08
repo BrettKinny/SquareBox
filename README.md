@@ -15,7 +15,7 @@ install command below and you're ready to code.
 *Influenced by [Omarchy](https://omarchy.org).*
 
 ![squarebox first-run setup](https://raw.githubusercontent.com/SquareWaveSystems/squarebox/demo/demo/squarebox-setup.gif)
-*For demonstration purposes only - actual setup may involve more staring at the screen.*
+*Actual setup may involve more staring at the screen.*
 
 Prerequisites
 -------------
