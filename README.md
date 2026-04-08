@@ -1,6 +1,6 @@
 # 🟧📦 squarebox
 
-**A curated set of modern CLI/TUI tools and AI coding assistants in a single container. Batteries included.**
+**A curated set of modern CLI/TUI tools and AI coding assistants in a Docker container. Batteries included.**
 
 For developers who love to live in the terminal but need to work across
 multiple platforms and devices.
