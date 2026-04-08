@@ -10,13 +10,13 @@ coding assistants, language SDKs, and a curated set of shell aliases. Run the
 install command below and you're ready to code.
 
 ![squarebox first-run setup](https://raw.githubusercontent.com/SquareWaveSystems/squarebox/demo/demo/squarebox-setup.gif)
-*For demonstration purposes only — actual setup may involve more staring at the screen.*
+*Actual setup may involve more staring at the screen.*
 
 Prerequisites
 -------------
 
 - [Docker](https://docs.docker.com/get-docker/)
-- [Git](https://git-scm.com/) — on Windows, install [Git for Windows](https://gitforwindows.org/)
+- [Git](https://git-scm.com/) - on Windows, install [Git for Windows](https://gitforwindows.org/)
   (provides `bash` and `winpty` needed by the install script)
 
 Install
@@ -153,8 +153,6 @@ preserved.
     sqrbx-update --apply      # download and install all updates
     sqrbx-update lazygit      # update a single tool
     sqrbx-update --list       # list all tools and current versions
-
-Set `GITHUB_TOKEN` to avoid API rate limits.
 
 ### Full rebuild (from the host)
 
