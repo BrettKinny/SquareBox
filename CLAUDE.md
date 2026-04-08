@@ -12,10 +12,15 @@ squarebox is a containerized development environment (Docker) combining modern C
 # Build the Docker image
 docker build -t squarebox .
 
-# Create and run a new container
+# Create and run a new container (SSH agent forwarding, capability-restricted)
 docker run -it --name squarebox \
+  --cap-drop=ALL --cap-add=CHOWN --cap-add=DAC_OVERRIDE \
+  --cap-add=FOWNER --cap-add=SETUID --cap-add=SETGID --cap-add=KILL \
+  -e SSH_AUTH_SOCK=/tmp/ssh-agent.sock \
+  -v "$SSH_AUTH_SOCK:/tmp/ssh-agent.sock" \
+  -v ~/.ssh/config:/home/dev/.ssh/config:ro \
+  -v ~/.ssh/known_hosts:/home/dev/.ssh/known_hosts:ro \
   -v ~/squarebox/workspace:/workspace \
-  -v ~/.ssh:/home/dev/.ssh:ro \
   -v ~/.config/git:/home/dev/.config/git \
   -v ~/squarebox/.config/starship.toml:/home/dev/.config/starship.toml \
   -v ~/squarebox/.config/lazygit:/home/dev/.config/lazygit \
@@ -35,8 +40,9 @@ The `install.sh` script automates initial setup (clone, build, create container,
 1. **Git identity** — name and email (skipped if already configured)
 2. **GitHub CLI auth** — persisted to `/workspace/.squarebox/gh` across rebuilds
 3. **AI coding assistant** — Claude Code, GitHub Copilot CLI, Google Gemini CLI, OpenAI Codex CLI, OpenCode (any combination)
-4. **Text editors** — micro, edit (Microsoft), fresh, helix, nvim (nano is always available)
-5. **SDKs** — Node.js (via nvm), Python (via uv), Go, .NET
+4. **Text editors** — micro, edit (Microsoft), fresh, nvim (nano is always available)
+5. **Terminal multiplexers** — tmux, zellij
+6. **SDKs** — Node.js (via nvm), Python (via uv), Go, .NET
 
 Selections are saved to `/workspace/.squarebox/` and reused on subsequent rebuilds.
 
@@ -50,11 +56,11 @@ scripts/update-versions.sh
 sqrbx-update
 ```
 
-`scripts/update-versions.sh` fetches latest GitHub releases, downloads artifacts for both architectures, computes SHA256 checksums, and updates `checksums.txt`, `setup-checksums.txt`, `Dockerfile`, and `setup.sh`. Set `GITHUB_TOKEN` to avoid API rate limits.
+`scripts/update-versions.sh` fetches latest GitHub releases, downloads artifacts for both architectures, computes SHA256 checksums, and updates `checksums.txt`, `setup-checksums.txt`, `Dockerfile`, and `setup.sh`.
 
 ## CI
 
-GitHub Actions workflow (`.github/workflows/build.yml`) validates the Dockerfile builds on every push and PR using buildx with GitHub Actions cache.
+GitHub Actions workflow (`.github/workflows/build.yml`) validates the Dockerfile builds on every push and PR using buildx with GitHub Actions cache. An E2E test suite (`scripts/e2e-test.sh`, `.github/workflows/e2e.yml`) runs the container and validates tool installations.
 
 ## Dockerfile Architecture
 

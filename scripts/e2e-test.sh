@@ -173,7 +173,7 @@ suite_setup_editors() {
 	# Pre-seed selections in /workspace/.squarebox/
 	mkdir -p /workspace/.squarebox
 	echo "opencode" > /workspace/.squarebox/ai-tool
-	echo "micro,edit,fresh,helix,nvim" > /workspace/.squarebox/editors
+	echo "micro,edit,fresh,nvim" > /workspace/.squarebox/editors
 	echo "tmux,zellij" > /workspace/.squarebox/multiplexer
 	echo "node,go" > /workspace/.squarebox/sdks
 
@@ -194,8 +194,7 @@ suite_setup_editors() {
 	run_test "3.7b micro installed" command -v micro
 	run_test "3.7c edit installed" command -v edit
 	run_test "3.7d fresh installed" command -v fresh
-	run_test "3.7e helix installed" command -v hx
-	run_test "3.7f nvim installed" command -v nvim
+	run_test "3.7e nvim installed" command -v nvim
 
 	# 3.8 multiplexers installed
 	run_test "3.8a tmux installed" command -v tmux
@@ -229,14 +228,7 @@ suite_update() {
 	run_test_grep "7.2 sqrbx-update --list" "delta" sqrbx-update --list
 
 	# 7.3 dry run (no args) exits without error
-	# Note: this contacts GitHub API, may fail without GITHUB_TOKEN
-	if [ -n "${GITHUB_TOKEN:-}" ]; then
-		run_test "7.3 sqrbx-update dry run" sqrbx-update
-	else
-		TEST_NUM=$((TEST_NUM + 1))
-		PASS_COUNT=$((PASS_COUNT + 1))
-		echo "ok ${TEST_NUM} - 7.3 sqrbx-update dry run # SKIP no GITHUB_TOKEN"
-	fi
+	run_test "7.3 sqrbx-update dry run" sqrbx-update
 
 	# 7.6 checksum tamper detection
 	# Create a fake checksums file with wrong hash, then try to update
@@ -259,28 +251,6 @@ suite_update() {
 	fi
 	rm -rf "$checksum_dir"
 
-	# 7.7/7.8 rate limit check runs (verify the function exists and runs)
-	# sqrbx-update always checks rate limit at startup
-	# 7.7/7.8 rate limit — verify sqrbx-update checks rate limit at startup
-	# The rate limit check happens silently unless limit is low; just verify
-	# the GITHUB_TOKEN env var is being used by checking the API limit endpoint
-	if [ -n "${GITHUB_TOKEN:-}" ]; then
-		local rl_output
-		rl_output=$(curl -fsSL -H "Authorization: token ${GITHUB_TOKEN}" \
-			"https://api.github.com/rate_limit" 2>&1) || true
-		TEST_NUM=$((TEST_NUM + 1))
-		if echo "$rl_output" | grep -q '"limit": 5000'; then
-			PASS_COUNT=$((PASS_COUNT + 1))
-			echo "ok ${TEST_NUM} - 7.8 GITHUB_TOKEN rate limit is 5000/hr"
-		else
-			FAIL_COUNT=$((FAIL_COUNT + 1))
-			echo "not ok ${TEST_NUM} - 7.8 GITHUB_TOKEN rate limit is 5000/hr"
-		fi
-	else
-		TEST_NUM=$((TEST_NUM + 1))
-		PASS_COUNT=$((PASS_COUNT + 1))
-		echo "ok ${TEST_NUM} - 7.8 rate limit check # SKIP no GITHUB_TOKEN"
-	fi
 }
 
 # ── Suite: devcontainer ──────────────────────────────────────────────────
