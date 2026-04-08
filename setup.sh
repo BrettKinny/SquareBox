@@ -360,7 +360,12 @@ done
 			esac
 		fi
 	done
-	[ -n "$c_target" ] && echo "alias c='$c_target'"
+	if [ -n "$c_target" ]; then
+		case "$c_target" in
+			copilot) echo "alias c='github-copilot-cli'" ;;
+			*)       echo "alias c='$c_target'" ;;
+		esac
+	fi
 } > ~/.squarebox-ai-aliases
 
 # Text editors
