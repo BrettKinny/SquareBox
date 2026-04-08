@@ -38,7 +38,8 @@ Start
 
     squarebox        # or: sqrbx
 
-Shell aliases are added automatically for Bash, Zsh, and PowerShell 7+.
+These are shell aliases for `docker start -ai squarebox`, added automatically
+for Bash, Zsh, and PowerShell 7+.
 
 The container is persistent: it suspends on exit and resumes on start, keeping
 installed packages, config, and shell history intact between sessions. Your code
