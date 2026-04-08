@@ -5,6 +5,13 @@ REPO="https://github.com/SquareWaveSystems/squarebox.git"
 INSTALL_DIR="${HOME}/squarebox"
 IMAGE_NAME="squarebox"
 CONTAINER_NAME="squarebox"
+EDGE="${SQUAREBOX_EDGE:-0}"
+
+for arg in "$@"; do
+	case "$arg" in
+		--edge) EDGE=1 ;;
+	esac
+done
 
 # Clone or update
 if [ -d "$INSTALL_DIR" ]; then
@@ -15,14 +22,20 @@ else
 	git clone "$REPO" "$INSTALL_DIR"
 fi
 
-# Check out the latest tagged release (fall back to main if no tags exist)
-LATEST_TAG=$(git -C "$INSTALL_DIR" tag --sort=-v:refname | head -1)
-if [ -n "$LATEST_TAG" ]; then
-	echo "Using release ${LATEST_TAG}..."
-	git -C "$INSTALL_DIR" checkout "$LATEST_TAG" --quiet
-else
-	echo "No releases found, using main branch..."
+# Select version: --edge uses latest main, default uses latest tagged release
+if [ "$EDGE" = "1" ]; then
+	echo "Using latest main (edge)..."
 	git -C "$INSTALL_DIR" checkout main --quiet
+	git -C "$INSTALL_DIR" pull --ff-only --quiet
+else
+	LATEST_TAG=$(git -C "$INSTALL_DIR" tag --sort=-v:refname | head -1)
+	if [ -n "$LATEST_TAG" ]; then
+		echo "Using release ${LATEST_TAG}..."
+		git -C "$INSTALL_DIR" checkout "$LATEST_TAG" --quiet
+	else
+		echo "No releases found, using main branch..."
+		git -C "$INSTALL_DIR" checkout main --quiet
+	fi
 fi
 
 # Verify Docker is available
