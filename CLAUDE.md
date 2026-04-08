@@ -51,7 +51,7 @@ scripts/update-versions.sh
 sqrbx-update
 ```
 
-`scripts/update-versions.sh` fetches latest GitHub releases, downloads artifacts for both architectures, computes SHA256 checksums, and updates `checksums.txt`, `setup-checksums.txt`, `Dockerfile`, and `setup.sh`. Set `GITHUB_TOKEN` to avoid API rate limits.
+`scripts/update-versions.sh` fetches latest GitHub releases, downloads artifacts for both architectures, computes SHA256 checksums, and updates `checksums.txt`, `setup-checksums.txt`, `Dockerfile`, and `setup.sh`.
 
 ## CI
 

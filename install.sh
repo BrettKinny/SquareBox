@@ -74,25 +74,19 @@ fi
 
 ALIASES_ADDED=false
 
-if ! grep -q 'alias sqrbx=' "$SHELL_RC" 2>/dev/null; then
-	echo "alias sqrbx='${DOCKER_START}'" >> "$SHELL_RC"
-	ALIASES_ADDED=true
-fi
+declare -A ALIASES=(
+	[sqrbx]="$DOCKER_START"
+	[squarebox]="$DOCKER_START"
+	[sqrbx-rebuild]="~/squarebox/install.sh"
+	[squarebox-rebuild]="~/squarebox/install.sh"
+)
 
-if ! grep -q 'alias squarebox=' "$SHELL_RC" 2>/dev/null; then
-	echo "alias squarebox='${DOCKER_START}'" >> "$SHELL_RC"
-	ALIASES_ADDED=true
-fi
-
-if ! grep -q 'alias sqrbx-rebuild=' "$SHELL_RC" 2>/dev/null; then
-	echo "alias sqrbx-rebuild='~/squarebox/install.sh'" >> "$SHELL_RC"
-	ALIASES_ADDED=true
-fi
-
-if ! grep -q 'alias squarebox-rebuild=' "$SHELL_RC" 2>/dev/null; then
-	echo "alias squarebox-rebuild='~/squarebox/install.sh'" >> "$SHELL_RC"
-	ALIASES_ADDED=true
-fi
+for name in "${!ALIASES[@]}"; do
+	if ! grep -q "alias ${name}=" "$SHELL_RC" 2>/dev/null; then
+		echo "alias ${name}='${ALIASES[$name]}'" >> "$SHELL_RC"
+		ALIASES_ADDED=true
+	fi
+done
 
 if [ "$ALIASES_ADDED" = true ]; then
 	echo "Added squarebox aliases to $SHELL_RC — restart your shell or run: source $SHELL_RC"
