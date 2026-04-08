@@ -16,7 +16,15 @@ docker_interactive() {
     fi
 }
 
-INSTALL_DIR="${HOME}/squarebox"
+# On MSYS2/Git Bash, HOME points to the MSYS home (/home/user) which maps to
+# an obscure Windows path (e.g. C:\Program Files\Git\home\user). Use USERPROFILE
+# instead so the install lands at a normal location (C:\Users\user\squarebox).
+if [ -n "${USERPROFILE:-}" ]; then
+	USER_HOME="$(cygpath -u "$USERPROFILE" 2>/dev/null || echo "$USERPROFILE")"
+else
+	USER_HOME="${HOME}"
+fi
+INSTALL_DIR="${USER_HOME}/squarebox"
 IMAGE_NAME="squarebox"
 CONTAINER_NAME="squarebox"
 
@@ -112,7 +120,7 @@ if command -v pwsh &>/dev/null; then
 fi
 
 # Prepare host directories
-mkdir -p "${HOME}/.config/git" "${INSTALL_DIR}/workspace" "${INSTALL_DIR}/.config/lazygit"
+mkdir -p "${USER_HOME}/.config/git" "${INSTALL_DIR}/workspace" "${INSTALL_DIR}/.config/lazygit"
 
 # Propagate host git identity into the container's config directory.
 # This avoids fragile file mounts on Windows/MSYS2 and prevents leaking
@@ -121,7 +129,7 @@ mkdir -p "${HOME}/.config/git" "${INSTALL_DIR}/workspace" "${INSTALL_DIR}/.confi
 # On MSYS2/Git Bash, HOME may point to the MSYS home (/home/user) rather than
 # the Windows profile (C:/Users/user), so git config --global misses the real
 # gitconfig. Fall back to reading from the Windows profile path via USERPROFILE.
-_git_cfg="${HOME}/.config/git/config"
+_git_cfg="${USER_HOME}/.config/git/config"
 
 _host_name="$(git config --global user.name 2>/dev/null || true)"
 _host_email="$(git config --global user.email 2>/dev/null || true)"
@@ -137,12 +145,6 @@ fi
 [ -n "$_host_name" ] && git config --file "$_git_cfg" user.name "$_host_name"
 [ -n "$_host_email" ] && git config --file "$_git_cfg" user.email "$_host_email"
 
-# Migrate from old layout if needed
-if [ -d "${HOME}/squarebox-workspace" ] && [ ! -d "${INSTALL_DIR}/workspace" ]; then
-	echo "Migrating ~/squarebox-workspace to ~/squarebox/workspace..."
-	mv "${HOME}/squarebox-workspace" "${INSTALL_DIR}/workspace"
-fi
-
 # Seed default configs (preserves existing customizations)
 if [ ! -f "${INSTALL_DIR}/.config/starship.toml" ]; then
 	cp "${INSTALL_DIR}/starship.toml" "${INSTALL_DIR}/.config/starship.toml"
@@ -154,8 +156,8 @@ fi
 echo "Creating container..."
 DOCKER_VOLUMES=(
 	-v "${INSTALL_DIR}/workspace:/workspace"
-	-v "${HOME}/.ssh:/home/dev/.ssh:ro"
-	-v "${HOME}/.config/git:/home/dev/.config/git"
+	-v "${USER_HOME}/.ssh:/home/dev/.ssh:ro"
+	-v "${USER_HOME}/.config/git:/home/dev/.config/git"
 	-v "${INSTALL_DIR}/.config/starship.toml:/home/dev/.config/starship.toml"
 	-v "${INSTALL_DIR}/.config/lazygit:/home/dev/.config/lazygit"
 	-v /etc/localtime:/etc/localtime:ro
