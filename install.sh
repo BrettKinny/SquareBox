@@ -74,16 +74,15 @@ fi
 
 ALIASES_ADDED=false
 
-declare -A ALIASES=(
-	[sqrbx]="$DOCKER_START"
-	[squarebox]="$DOCKER_START"
-	[sqrbx-rebuild]="~/squarebox/install.sh"
-	[squarebox-rebuild]="~/squarebox/install.sh"
-)
-
-for name in "${!ALIASES[@]}"; do
+for entry in \
+	"sqrbx=${DOCKER_START}" \
+	"squarebox=${DOCKER_START}" \
+	"sqrbx-rebuild=~/squarebox/install.sh" \
+	"squarebox-rebuild=~/squarebox/install.sh"; do
+	name="${entry%%=*}"
+	value="${entry#*=}"
 	if ! grep -q "alias ${name}=" "$SHELL_RC" 2>/dev/null; then
-		echo "alias ${name}='${ALIASES[$name]}'" >> "$SHELL_RC"
+		echo "alias ${name}='${value}'" >> "$SHELL_RC"
 		ALIASES_ADDED=true
 	fi
 done

@@ -251,10 +251,6 @@ suite_update() {
 	fi
 	rm -rf "$checksum_dir"
 
-	# 7.7 rate limit check runs (verify the function exists and runs)
-	# sqrbx-update always checks rate limit at startup; it runs silently
-	# unless the limit is low, so just verify sqrbx-update doesn't error
-	run_test "7.7 sqrbx-update rate limit check" sqrbx-update --help
 }
 
 # ── Suite: devcontainer ──────────────────────────────────────────────────

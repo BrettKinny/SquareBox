@@ -257,9 +257,9 @@ touch ~/.squarebox-sdk-paths
 
 _install_node_inner() {
 	rm -rf "$HOME/.nvm"
-	curl -fsSo $SB_TMPDIR/nvm-install.sh "https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh"
-	verify_checksum $SB_TMPDIR/nvm-install.sh "nvm-install-v${NVM_VERSION}.sh"
-	bash $SB_TMPDIR/nvm-install.sh >/dev/null 2>&1
+	curl -fsSo "${SB_TMPDIR}/nvm-install.sh" "https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh"
+	verify_checksum "${SB_TMPDIR}/nvm-install.sh" "nvm-install-v${NVM_VERSION}.sh"
+	bash "${SB_TMPDIR}/nvm-install.sh" >/dev/null 2>&1
 	export NVM_DIR="$HOME/.nvm"
 	# shellcheck source=/dev/null
 	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -712,9 +712,9 @@ install_python() {
 
 _install_go_inner() {
 	rm -rf "$HOME/.local/go"
-	curl -fsSLo $SB_TMPDIR/go.tar.gz "https://go.dev/dl/${GO_VERSION}.linux-${SB_GOARCH}.tar.gz"
-	verify_checksum $SB_TMPDIR/go.tar.gz "${GO_VERSION}.linux-${SB_GOARCH}.tar.gz"
-	tar xzf $SB_TMPDIR/go.tar.gz -C ~/.local
+	curl -fsSLo "${SB_TMPDIR}/go.tar.gz" "https://go.dev/dl/${GO_VERSION}.linux-${SB_GOARCH}.tar.gz"
+	verify_checksum "${SB_TMPDIR}/go.tar.gz" "${GO_VERSION}.linux-${SB_GOARCH}.tar.gz"
+	tar xzf "${SB_TMPDIR}/go.tar.gz" -C ~/.local
 	if ! grep -q 'GOROOT' ~/.squarebox-sdk-paths 2>/dev/null; then
 		cat <<'PATHS' >> ~/.squarebox-sdk-paths
 export GOROOT="$HOME/.local/go"
