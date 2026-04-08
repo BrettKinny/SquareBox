@@ -276,6 +276,15 @@ Then remove the `sqrbx` and `sqrbx-rebuild` aliases from your shell config
 (`~/.bashrc`, `~/.zshrc`, or `~/Documents/PowerShell/Microsoft.PowerShell_profile.ps1`).
 Back up `~/squarebox/workspace` first if you need your code.
 
+Make it your own
+-----------------
+
+squarebox is meant to be a starting point, not a finished product. Fork it,
+swap out tools, add your own dotfiles, change the theme — build the dev
+environment that fits the way you work. The Dockerfile is intentionally
+straightforward and the tool registry (`scripts/lib/tools.yaml`) makes it easy
+to add or remove tools. Use it as a base, take what's useful, and make it yours.
+
 ## Acknowledgements
 
 Influenced by [Omarchy](https://omarchy.org).
