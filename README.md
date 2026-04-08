@@ -2,14 +2,14 @@
 
 **A curated set of modern CLI/TUI tools and AI coding assistants in a single container. Batteries included.**
 
-Setting up a new dev machine means hours of installing tools, tweaking configs,
-and getting everything just right - then doing it all again on the next machine.
-squarebox packages a complete terminal-based development environment into a
-single Docker container: modern file-listing and search tools, git UIs, AI
-coding assistants, language SDKs, and a curated set of shell aliases. Run the
-same box anywhere - on your desktop, a VPS, or a Codespace - and SSH in
-from your laptop (any OS), tablet, or phone. Run the install command below
-and you're ready to code.
+For developers who love to live in the terminal but need to work across
+multiple platforms and devices. squarebox packages a complete terminal-based
+development environment into a single Docker container: modern file-listing
+and search tools, git UIs, AI coding assistants, language SDKs, and a curated
+set of shell aliases. Run the same box anywhere - on your desktop, a VPS, or
+a Codespace - and SSH in from your laptop (any OS), tablet, or phone. No more
+setting up a new machine from scratch. Run the install command below and you're
+ready to code.
 
 Inspired by [Omarchy](https://omarchy.org).
 
