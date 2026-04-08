@@ -15,3 +15,4 @@
 - **Multi-agent workflow orchestration** — explore adding a layer to run multiple AI coding agents simultaneously in isolated contexts (git worktrees + tmux sessions), inspired by agent-of-empires; may be better to integrate an existing tool than build from scratch
 - **Neovim defaults from omarchy** — bring across the neovim configuration defaults from omarchy so nvim works well out of the box
 - **Additional developer TUI tools** — add difftastic (syntax-aware structural diffs), hyperfine (command-line benchmarking), and just (modern task runner) to the default image
+- **Podman compatibility** — support Podman as a drop-in alternative to Docker for building and running squarebox containers
