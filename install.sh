@@ -100,32 +100,27 @@ case "${SHELL:-}" in
 	*)     SHELL_RC="${USER_HOME}/.bashrc" ;;
 esac
 
-# Determine docker start command (winpty needed on mintty/MSYS2).
-# Detect at runtime via a wrapper so the alias works across terminals.
-if [[ -n "${MSYSTEM:-}" || "${TERM_PROGRAM:-}" == "mintty" ]] \
-    && command -v winpty &>/dev/null; then
-	DOCKER_START="winpty docker start -ai squarebox"
-else
-	DOCKER_START="docker start -ai squarebox"
-fi
-
+# Use shell functions (not aliases) so winpty detection happens at runtime
+# rather than being baked in at install time. This way the same config works
+# regardless of which terminal the user opens (Git Bash, PowerShell, etc.).
 ALIASES_ADDED=false
 
-for entry in \
-	"sqrbx=${DOCKER_START}" \
-	"squarebox=${DOCKER_START}" \
-	"sqrbx-rebuild=${INSTALL_DIR}/install.sh" \
-	"squarebox-rebuild=${INSTALL_DIR}/install.sh"; do
-	name="${entry%%=*}"
-	value="${entry#*=}"
-	if ! grep -q "alias ${name}=" "$SHELL_RC" 2>/dev/null; then
-		echo "alias ${name}='${value}'" >> "$SHELL_RC"
+_add_shell_func() {
+	local name="$1" body="$2"
+	if ! grep -q "^${name}()" "$SHELL_RC" 2>/dev/null; then
+		printf '%s() { %s; }\n' "$name" "$body" >> "$SHELL_RC"
 		ALIASES_ADDED=true
 	fi
-done
+}
+
+_docker_start='if command -v winpty &>/dev/null && [[ -n "${MSYSTEM:-}" ]]; then winpty docker start -ai squarebox; else docker start -ai squarebox; fi'
+_add_shell_func "sqrbx" "$_docker_start"
+_add_shell_func "squarebox" "$_docker_start"
+_add_shell_func "sqrbx-rebuild" "${INSTALL_DIR}/install.sh"
+_add_shell_func "squarebox-rebuild" "${INSTALL_DIR}/install.sh"
 
 if [ "$ALIASES_ADDED" = true ]; then
-	echo "Added squarebox aliases to $SHELL_RC — restart your shell or run: source $SHELL_RC"
+	echo "Added squarebox functions to $SHELL_RC — restart your shell or run: source $SHELL_RC"
 fi
 
 # Git Bash on Windows opens a login shell which reads .bash_profile (not
@@ -133,10 +128,12 @@ fi
 if [[ -n "${MSYSTEM:-}" ]] && [[ "${SHELL_RC}" == *".bashrc" ]]; then
 	_bash_profile="${USER_HOME}/.bash_profile"
 	if ! grep -q '\.bashrc' "$_bash_profile" 2>/dev/null; then
-		cat >> "$_bash_profile" <<-'BPEOF'
+		# Use the same USER_HOME path that SHELL_RC points to, since $HOME
+		# may differ from USER_HOME on MSYS2.
+		cat >> "$_bash_profile" <<-BPEOF
 
 		# Source .bashrc for aliases and functions
-		[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
+		[ -f "${SHELL_RC}" ] && . "${SHELL_RC}"
 		BPEOF
 		echo "Updated .bash_profile to source .bashrc."
 	fi
