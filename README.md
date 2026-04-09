@@ -13,7 +13,7 @@ a Codespace - and SSH in from your laptop (any OS), tablet, or phone. Run the
 install command below and you're ready to code.
 
 The goal is to make modern terminal tooling easy and accessible: one line
-install, sleek setup, sensible defaults (thanks omarchy).
+install, sleek setup, sensible defaults (thanks [omarchy](https://omarchy.org)).
 
 ![squarebox first-run setup](https://raw.githubusercontent.com/SquareWaveSystems/squarebox/demo/demo/squarebox-setup.gif)
 *(Actual setup may involve more staring at the screen.)*
@@ -296,7 +296,3 @@ swap out tools, add your own dotfiles, change the theme - build the dev
 environment that fits the way you work. The Dockerfile is intentionally
 straightforward and the tool registry (`scripts/lib/tools.yaml`) makes it easy
 to add or remove tools. Use it as a base, take what's useful, and make it yours.
-
-## Acknowledgements
-
-Influenced by [Omarchy](https://omarchy.org).
