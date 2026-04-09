@@ -48,29 +48,33 @@ for arg in "$@"; do
 	esac
 done
 
+# --quiet is applied to git operations unless --verbose is set
+GIT_QUIET=(--quiet)
+[ "$VERBOSE" = 1 ] && GIT_QUIET=()
+
 # Clone or update
 if [ -d "$INSTALL_DIR" ]; then
 	echo "Updating existing install..."
-	git -C "$INSTALL_DIR" fetch --tags --force --quiet origin
+	git -C "$INSTALL_DIR" fetch --tags --force "${GIT_QUIET[@]}" origin
 else
 	echo "Cloning squarebox..."
-	git clone --quiet "$REPO" "$INSTALL_DIR"
+	git clone "${GIT_QUIET[@]}" "$REPO" "$INSTALL_DIR"
 fi
 
 # Select version: --edge uses latest main, default uses latest tagged release
 if [ "$EDGE" = "1" ]; then
 	echo "Using latest main (edge)..."
-	git -C "$INSTALL_DIR" checkout main --quiet
-	git -C "$INSTALL_DIR" pull --ff-only --quiet
+	git -C "$INSTALL_DIR" checkout main "${GIT_QUIET[@]}"
+	git -C "$INSTALL_DIR" pull --ff-only "${GIT_QUIET[@]}"
 else
 	LATEST_TAG=$(git -C "$INSTALL_DIR" tag --sort=-v:refname | grep -v -- '-rc' | head -1)
 	if [ -n "$LATEST_TAG" ]; then
 		echo "Using release ${LATEST_TAG}..."
-		git -C "$INSTALL_DIR" checkout "$LATEST_TAG" --quiet
+		git -C "$INSTALL_DIR" checkout "$LATEST_TAG" "${GIT_QUIET[@]}"
 	else
 		echo "No releases found, using main branch..."
-		git -C "$INSTALL_DIR" checkout main --quiet
-		git -C "$INSTALL_DIR" pull --ff-only --quiet
+		git -C "$INSTALL_DIR" checkout main "${GIT_QUIET[@]}"
+		git -C "$INSTALL_DIR" pull --ff-only "${GIT_QUIET[@]}"
 	fi
 fi
 
@@ -95,9 +99,9 @@ else
 	if docker_cmd build -t "$IMAGE_NAME" "$INSTALL_DIR" > "$_build_log" 2>&1; then
 		echo "done"
 	else
-		echo "FAILED"
-		echo "Build output:"
-		cat "$_build_log"
+		echo "FAILED" >&2
+		echo "Build output:" >&2
+		cat "$_build_log" >&2
 		exit 1
 	fi
 fi
