@@ -5,11 +5,11 @@
 *For developers who live in the terminal but need to work across
 multiple platforms and devices.*
 
-**squarebox** packages a complete terminal-based
-development environment into a single Docker container: modern file-listing
-and search tools, git UIs, AI coding assistants, language SDKs, and an
-opinionated set of shell aliases. Run the same box anywhere (desktop, VPS,
-or Codespace) and SSH in from your laptop, tablet, or phone (please don't).
+**squarebox** packages a complete terminal-based development environment
+into a single Docker container: modern CLI tools, AI coding assistants,
+language SDKs, and an opinionated set of shell aliases. Run the same box
+anywhere (desktop, VPS, or Codespace) and SSH in from your laptop, tablet,
+or phone (please don't).
 
 The goal is to make modern terminal tooling easy and accessible. One-line
 install, interactive first-run setup, sensible defaults (thanks [omarchy](https://omarchy.org)).
