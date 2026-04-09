@@ -209,7 +209,6 @@ sed -i "s|^MICRO_VERSION=.*|MICRO_VERSION=\"${VERSIONS[micro]}\"|" "${REPO_ROOT}
 sed -i "s|^EDIT_VERSION=.*|EDIT_VERSION=\"${VERSIONS[edit]}\"|" "${REPO_ROOT}/setup.sh"
 sed -i "s|^EDIT_ASSET_VERSION=.*|EDIT_ASSET_VERSION=\"${EDIT_ASSET_VERSION}\"|" "${REPO_ROOT}/setup.sh"
 sed -i "s|^FRESH_VERSION=.*|FRESH_VERSION=\"${VERSIONS[fresh]}\"|" "${REPO_ROOT}/setup.sh"
-sed -i "s|^HELIX_VERSION=.*|HELIX_VERSION=\"${VERSIONS[helix]}\"|" "${REPO_ROOT}/setup.sh"
 sed -i "s|^NVIM_VERSION=.*|NVIM_VERSION=\"${VERSIONS[nvim]}\"|" "${REPO_ROOT}/setup.sh"
 sed -i "s|^ZELLIJ_VERSION=.*|ZELLIJ_VERSION=\"${VERSIONS[zellij]}\"|" "${REPO_ROOT}/setup.sh"
 sed -i "s|^LAZYGIT_VERSION=.*|LAZYGIT_VERSION=\"${VERSIONS[lazygit]}\"|" "${REPO_ROOT}/setup.sh"
