@@ -8,7 +8,10 @@
 #   sb_list_group <group>           List tools in a group (dockerfile/setup)
 #   sb_artifact <tool> <ver> [arch] Resolve artifact filename
 #   sb_url <tool> <ver> [arch]      Full GitHub release download URL
-#   sb_install <tool> <ver>         Download, verify, extract, and install
+#   sb_gh_latest_tag <repo>         Fetch latest release tag from GitHub API
+#   sb_latest_version <tool>        Latest version (tag with version_prefix stripped)
+#   sb_resolve_asset_version <tool> Populate SB_ASSET_VERSION from latest assets
+#   sb_install <tool> [ver|latest]  Download, verify, extract, and install
 #
 # Override sb_verify(file, artifact_name) before calling sb_install to
 # plug in your own checksum verification. Default is a no-op.
@@ -102,6 +105,61 @@ sb_url() {
 	echo "https://github.com/${repo}/releases/download/${tag}/${artifact}"
 }
 
+# ── Latest-version resolution (GitHub releases API) ──────────────────
+
+# Fetch the latest release tag for a GitHub repo.
+# Returns the raw tag (e.g. "v0.40.3") on stdout.
+sb_gh_latest_tag() {
+	local repo="$1"
+	local response http_code body tag
+	response=$(curl -fsSL -w '\n%{http_code}' \
+		"https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null) || true
+	http_code=$(echo "$response" | tail -1)
+	body=$(echo "$response" | sed '$d')
+	if [ "$http_code" != "200" ]; then
+		echo "Error: GitHub API returned HTTP ${http_code} for ${repo}" >&2
+		return 1
+	fi
+	tag=$(echo "$body" | jq -r '.tag_name')
+	if [ -z "$tag" ] || [ "$tag" = "null" ]; then
+		echo "Error: no release tag for ${repo}" >&2
+		return 1
+	fi
+	echo "$tag"
+}
+
+# Latest version of a tool registered in tools.yaml, with version_prefix stripped.
+sb_latest_version() {
+	local tool="$1"
+	local repo prefix tag
+	repo=$(sb_get "$tool" repo)
+	prefix=$(sb_get "$tool" version_prefix)
+	tag=$(sb_gh_latest_tag "$repo") || return 1
+	if [ -n "$prefix" ]; then
+		echo "${tag#${prefix}}"
+	else
+		echo "$tag"
+	fi
+}
+
+# Some tools publish assets whose embedded version differs from the tag
+# (e.g. microsoft/edit). For tools marked asset_version_from_api: true in
+# tools.yaml, query the latest release, locate an asset matching this
+# architecture, and extract a semver from its filename into SB_ASSET_VERSION.
+sb_resolve_asset_version() {
+	local tool="$1"
+	[ "$(sb_get "$tool" asset_version_from_api)" = "true" ] || return 0
+	local repo body name ver
+	repo=$(sb_get "$tool" repo)
+	body=$(curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null) || return 1
+	name=$(echo "$body" | jq -r '.assets[].name' | grep -F "${SB_ZARCH}" | head -1)
+	[ -z "$name" ] && { echo "Error: no ${SB_ZARCH} asset for ${repo}" >&2; return 1; }
+	ver=$(echo "$name" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+	[ -z "$ver" ] && { echo "Error: no semver in asset name ${name}" >&2; return 1; }
+	SB_ASSET_VERSION="$ver"
+	export SB_ASSET_VERSION
+}
+
 # ── Verification hook (override before calling sb_install) ────────────
 
 sb_verify() { :; }
@@ -109,7 +167,14 @@ sb_verify() { :; }
 # ── Install pipeline ─────────────────────────────────────────────────
 
 sb_install() {
-	local tool="$1" version="$2"
+	local tool="$1" version="${2:-latest}"
+	if [ "$version" = "latest" ]; then
+		version=$(sb_latest_version "$tool") || return 1
+	fi
+	# Some tools (e.g. microsoft/edit) have an asset version that differs
+	# from the tag; sb_resolve_asset_version is a no-op unless the tool
+	# is marked asset_version_from_api: true in tools.yaml.
+	sb_resolve_asset_version "$tool" || return 1
 	local method dest_type artifact url binaries find_bin
 	method=$(sb_get "$tool" method)
 	dest_type=$(sb_get "$tool" dest)
