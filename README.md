@@ -188,7 +188,7 @@ Aliases
 
 ### Multiplexer Keybindings (Experimental)
 
-Both tmux and zellij ship with [Omarchy](https://omarchy.org)-inspired defaults and matching keybindings:
+Both tmux and zellij ship with Omarchy-inspired defaults and matching keybindings:
 
 | Feature | Tmux | Zellij |
 |---------|------|--------|
