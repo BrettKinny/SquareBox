@@ -145,7 +145,7 @@ fi
 echo "PowerShell profile setup:"
 if command -v pwsh &>/dev/null; then
 	echo "  pwsh found: $(command -v pwsh)"
-	_ps_profile_raw="$(pwsh -NoProfile -Command '$PROFILE' 2>/dev/null || true)"
+	_ps_profile_raw="$(pwsh -NoProfile -Command '$PROFILE' 2>/dev/null | tr -d '\r' || true)"
 	echo "  \$PROFILE (raw): ${_ps_profile_raw:-<empty>}"
 	if [ -n "$_ps_profile_raw" ]; then
 		_ps_profile="$(cygpath -u "$_ps_profile_raw" 2>/dev/null || echo "$_ps_profile_raw")"
