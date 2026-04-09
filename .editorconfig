@@ -27,5 +27,9 @@ indent_style = space
 indent_size = 2
 trim_trailing_whitespace = false
 
+# install.sh uses tabs because its heredocs (<<-) require tab indentation
+[install.sh]
+indent_style = tab
+
 [Makefile]
 indent_style = tab
