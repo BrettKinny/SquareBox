@@ -8,12 +8,11 @@ multiple platforms and devices.*
 **squarebox** packages a complete terminal-based
 development environment into a single Docker container: modern file-listing
 and search tools, git UIs, AI coding assistants, language SDKs, and an
-opinionated set of shell aliases. Run the same box anywhere - on your desktop, a VPS, or
-a Codespace - and SSH in from your laptop (any OS), tablet, or phone (please don't). Run the
-install command below and you're ready to code.
+opinionated set of shell aliases. Run the same box anywhere (desktop, VPS,
+or Codespace) and SSH in from your laptop, tablet, or phone (please don't).
 
-The goal is to make modern terminal tooling easy and accessible: one line
-install, sleek setup, sensible defaults (thanks [omarchy](https://omarchy.org)).
+The goal is to make modern terminal tooling easy and accessible. One-line
+install, interactive first-run setup, sensible defaults (thanks [omarchy](https://omarchy.org)).
 
 ![squarebox first-run setup](https://raw.githubusercontent.com/SquareWaveSystems/squarebox/demo/demo/squarebox-setup.gif)
 *(Actual setup may involve more staring at the screen.)*
@@ -188,7 +187,7 @@ Aliases
 
 ### Multiplexer Keybindings (Experimental)
 
-Both tmux and zellij ship with [Omarchy](https://omarchy.com)-inspired defaults and matching keybindings:
+Both tmux and zellij ship with [Omarchy](https://omarchy.org)-inspired defaults and matching keybindings:
 
 | Feature | Tmux | Zellij |
 |---------|------|--------|
