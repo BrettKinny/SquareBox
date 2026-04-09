@@ -128,11 +128,19 @@ if command -v pwsh &>/dev/null; then
 			# squarebox aliases
 			function sqrbx { docker start -ai squarebox }
 			function squarebox { docker start -ai squarebox }
-			function sqrbx-rebuild { & "$HOME/squarebox/install.sh" }
-			function squarebox-rebuild { & "$HOME/squarebox/install.sh" }
+			function sqrbx-rebuild { & bash "$HOME/squarebox/install.sh" }
+			function squarebox-rebuild { & bash "$HOME/squarebox/install.sh" }
 			PSEOF
 			echo "Added squarebox functions to PowerShell profile — restart PowerShell to use them."
+			echo "Note: if your profile does not load, run: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned"
 		fi
+	else
+		echo "Warning: Could not determine PowerShell profile path."
+	fi
+else
+	# Only warn on Windows-like environments where PowerShell is expected
+	if [ -n "${MSYSTEM:-}" ] || [ -n "${USERPROFILE:-}" ]; then
+		echo "Note: pwsh (PowerShell 7+) not found on PATH — skipping PowerShell profile setup."
 	fi
 fi
 
