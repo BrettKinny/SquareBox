@@ -41,11 +41,16 @@ Log out and back in (or run `newgrp docker`) so your shell picks up the new grou
     winget install --id Docker.DockerDesktop -e
 
 On macOS and Windows, start Docker Desktop once after install so the daemon is
-running before you continue. For other options (rootless, Colima, OrbStack,
-Podman, etc.) see the [Docker install docs](https://docs.docker.com/get-docker/).
+running before you continue.
 
 Install
 -------
+
+These commands clone the repo, build the Docker image, and drop you into the
+container (if possible). On first login, a setup script runs automatically to
+configure git (pulling your name and email from the host's global git config
+if available), GitHub CLI, your choice of AI coding assistant, and language
+SDKs.
 
 **Stable**
 
@@ -61,11 +66,6 @@ If the install fails or you want to see the full docker build and git output, re
 
     curl -fsSL https://raw.githubusercontent.com/SquareWaveSystems/squarebox/main/install.sh | bash -s -- --verbose
 
-This clones the repo, builds the Docker image, and drops you into the container (if possible).
-On first login, a setup script runs automatically to configure git (pulling your
-name and email from the host's global git config if available), GitHub CLI, your
-choice of AI coding assistant, and language SDKs.
-
 Start
 -----
 
@@ -75,9 +75,10 @@ These are shell aliases for `docker start -ai squarebox`, added automatically
 for Bash, Zsh, and PowerShell 7+.
 
 The container is persistent: it suspends on exit and resumes on start, keeping
-installed packages, config, and shell history intact between sessions. Your code
-lives on the host at `~/squarebox/workspace` via volume mount, so it survives
-even if the container is deleted.
+installed packages, config, and shell history intact between sessions. Your
+code and tool config live on the host under `~/squarebox` (`workspace/` for
+code, `.config/` for tool config) via volume mounts, so they survive even if
+the container is deleted.
 
 What's included
 ---------------
