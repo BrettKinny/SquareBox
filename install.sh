@@ -116,16 +116,9 @@ if [ "$ALIASES_ADDED" = true ]; then
 fi
 
 # PowerShell profile (Windows) — uses functions since PS aliases can't take arguments.
-# Query PowerShell for the actual $PROFILE path since Documents may be redirected (e.g. OneDrive).
-# Try pwsh (PowerShell 7+) first, fall back to powershell.exe (Windows PowerShell 5.1).
-_ps_cmd=""
+# Query pwsh for the actual $PROFILE path since Documents may be redirected (e.g. OneDrive).
 if command -v pwsh &>/dev/null; then
-	_ps_cmd="pwsh"
-elif command -v powershell.exe &>/dev/null; then
-	_ps_cmd="powershell.exe"
-fi
-if [ -n "$_ps_cmd" ]; then
-	_ps_profile="$("$_ps_cmd" -NoProfile -Command '$PROFILE' 2>/dev/null || true)"
+	_ps_profile="$(pwsh -NoProfile -Command '$PROFILE' 2>/dev/null || true)"
 	if [ -n "$_ps_profile" ]; then
 		_ps_profile="$(cygpath -u "$_ps_profile" 2>/dev/null || echo "$_ps_profile")"
 		mkdir -p "$(dirname "$_ps_profile")"
@@ -135,21 +128,11 @@ if [ -n "$_ps_cmd" ]; then
 			# squarebox aliases
 			function sqrbx { docker start -ai squarebox }
 			function squarebox { docker start -ai squarebox }
-			function sqrbx-rebuild { & bash "$HOME/squarebox/install.sh" }
-			function squarebox-rebuild { & bash "$HOME/squarebox/install.sh" }
+			function sqrbx-rebuild { & "$HOME/squarebox/install.sh" }
+			function squarebox-rebuild { & "$HOME/squarebox/install.sh" }
 			PSEOF
-			echo "Added squarebox functions to PowerShell profile ($_ps_profile)."
-			echo "Restart PowerShell to use them."
-			echo "Note: if your profile does not load, run: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned"
+			echo "Added squarebox functions to PowerShell profile — restart PowerShell to use them."
 		fi
-	else
-		echo "Warning: Could not determine PowerShell profile path from $_ps_cmd."
-	fi
-else
-	# Only warn on Windows-like environments where PowerShell is expected
-	if [ -n "${MSYSTEM:-}" ] || [ -n "${USERPROFILE:-}" ]; then
-		echo "Note: PowerShell not found on PATH — skipping PowerShell profile setup."
-		echo "If you use PowerShell, ensure pwsh or powershell.exe is on your Git Bash PATH."
 	fi
 fi
 
