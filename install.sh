@@ -140,7 +140,7 @@ if [[ -n "${MSYSTEM:-}" ]] && [[ "${SHELL_RC}" == *".bashrc" ]]; then
 fi
 
 # PowerShell profile (Windows) — uses functions since PS aliases can't take arguments.
-# Query pwsh for the actual $PROFILE path since Documents may be redirected (e.g. OneDrive).
+# Query the actual $PROFILE path since Documents may be redirected (e.g. OneDrive).
 # Check both pwsh (PowerShell 7+/Core) and powershell (Windows PowerShell 5.1).
 _ps_cmd=""
 if command -v pwsh &>/dev/null; then
@@ -164,6 +164,23 @@ if [ -n "$_ps_cmd" ]; then
 			function squarebox-rebuild { bash "$HOME/squarebox/install.sh" }
 			PSEOF
 			echo "Added squarebox functions to PowerShell profile — restart PowerShell to use them."
+		fi
+
+		# Windows PowerShell 5.1 defaults ExecutionPolicy to Restricted,
+		# which silently blocks profile scripts from loading. Set it to
+		# RemoteSigned (allows local scripts like profiles) if needed.
+		# pwsh (7+) defaults to RemoteSigned and doesn't need this.
+		_ps_policy="$("$_ps_cmd" -NoProfile -Command 'Get-ExecutionPolicy' 2>/dev/null || true)"
+		if [ "$_ps_policy" = "Restricted" ] || [ "$_ps_policy" = "Undefined" ]; then
+			echo "PowerShell execution policy is '$_ps_policy' — profiles won't load."
+			if "$_ps_cmd" -NoProfile -Command \
+				'Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force' 2>/dev/null; then
+				echo "Set execution policy to RemoteSigned for current user."
+			else
+				echo "Could not set execution policy automatically."
+				echo "Run this in PowerShell to enable the profile:"
+				echo "  Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned"
+			fi
 		fi
 	fi
 fi
