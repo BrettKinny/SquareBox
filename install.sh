@@ -242,6 +242,35 @@ if [ ! -f "${INSTALL_DIR}/.config/lazygit/config.yml" ]; then
 	printf 'git:\n  paging:\n    colorArg: always\n    pager: delta --dark --paging=never\n' > "${INSTALL_DIR}/.config/lazygit/config.yml"
 fi
 
+# The container's `dev` user is uid 1000. On native Linux, bind mounts preserve
+# host ownership, so when the host user's uid differs (e.g. installing as root
+# on DietPi), `dev` can't write to the mounted dirs and setup.sh fails with
+# "Permission denied". Chown the host paths we manage to 1000:1000 in that case.
+# Linux-only: macOS and Windows Docker Desktop remap bind-mount ownership
+# transparently via their VMs, so chowning host dirs there is both unnecessary
+# and harmful (uid 1000 typically doesn't exist on the host).
+if [ "$(uname -s)" = "Linux" ] && [ "$(id -u)" -ne 1000 ]; then
+	_chown_paths=(
+		"${USER_HOME}/.config/git"
+		"${INSTALL_DIR}/workspace"
+		"${INSTALL_DIR}/.config"
+	)
+	if [ "$(id -u)" -eq 0 ]; then
+		_chown=(chown)
+	elif command -v sudo &>/dev/null; then
+		echo "Host uid $(id -u) differs from container 'dev' uid (1000); using sudo to chown mount dirs..."
+		_chown=(sudo chown)
+	else
+		echo "Warning: host uid $(id -u) differs from container 'dev' uid (1000) and sudo is unavailable." >&2
+		echo "         You may see permission errors in the container. Manually run:" >&2
+		echo "         chown -R 1000:1000 ${_chown_paths[*]}" >&2
+		_chown=()
+	fi
+	if [ ${#_chown[@]} -gt 0 ]; then
+		"${_chown[@]}" -R 1000:1000 "${_chown_paths[@]}"
+	fi
+fi
+
 echo "Creating container..."
 DOCKER_OPTS=()
 DOCKER_VOLUMES=(
