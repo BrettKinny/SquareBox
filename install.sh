@@ -39,36 +39,42 @@ INSTALL_DIR="${USER_HOME}/squarebox"
 IMAGE_NAME="squarebox"
 CONTAINER_NAME="squarebox"
 EDGE="${SQUAREBOX_EDGE:-0}"
+VERBOSE=0
 
 for arg in "$@"; do
 	case "$arg" in
 		--edge) EDGE=1 ;;
+		--verbose) VERBOSE=1 ;;
 	esac
 done
+
+# --quiet is applied to git operations unless --verbose is set
+GIT_QUIET=(--quiet)
+[ "$VERBOSE" = 1 ] && GIT_QUIET=()
 
 # Clone or update
 if [ -d "$INSTALL_DIR" ]; then
 	echo "Updating existing install..."
-	git -C "$INSTALL_DIR" fetch --tags --force origin
+	git -C "$INSTALL_DIR" fetch --tags --force "${GIT_QUIET[@]}" origin
 else
 	echo "Cloning squarebox..."
-	git clone "$REPO" "$INSTALL_DIR"
+	git clone "${GIT_QUIET[@]}" "$REPO" "$INSTALL_DIR"
 fi
 
 # Select version: --edge uses latest main, default uses latest tagged release
 if [ "$EDGE" = "1" ]; then
 	echo "Using latest main (edge)..."
-	git -C "$INSTALL_DIR" checkout main --quiet
-	git -C "$INSTALL_DIR" pull --ff-only --quiet
+	git -C "$INSTALL_DIR" checkout main "${GIT_QUIET[@]}"
+	git -C "$INSTALL_DIR" pull --ff-only "${GIT_QUIET[@]}"
 else
 	LATEST_TAG=$(git -C "$INSTALL_DIR" tag --sort=-v:refname | grep -v -- '-rc' | head -1)
 	if [ -n "$LATEST_TAG" ]; then
 		echo "Using release ${LATEST_TAG}..."
-		git -C "$INSTALL_DIR" checkout "$LATEST_TAG" --quiet
+		git -C "$INSTALL_DIR" checkout "$LATEST_TAG" "${GIT_QUIET[@]}"
 	else
 		echo "No releases found, using main branch..."
-		git -C "$INSTALL_DIR" checkout main --quiet
-		git -C "$INSTALL_DIR" pull --ff-only --quiet
+		git -C "$INSTALL_DIR" checkout main "${GIT_QUIET[@]}"
+		git -C "$INSTALL_DIR" pull --ff-only "${GIT_QUIET[@]}"
 	fi
 fi
 
@@ -83,8 +89,22 @@ if ! docker_cmd info &>/dev/null; then
 fi
 
 # Build
-echo "Building image..."
-docker_cmd build -t "$IMAGE_NAME" "$INSTALL_DIR"
+_build_log="$(mktemp)"
+trap 'rm -f "$_build_log"' EXIT
+if [ "$VERBOSE" = 1 ]; then
+	echo "Building image..."
+	docker_cmd build -t "$IMAGE_NAME" "$INSTALL_DIR"
+else
+	printf "Building image... "
+	if docker_cmd build -t "$IMAGE_NAME" "$INSTALL_DIR" > "$_build_log" 2>&1; then
+		echo "done"
+	else
+		echo "FAILED" >&2
+		echo "Build output:" >&2
+		cat "$_build_log" >&2
+		exit 1
+	fi
+fi
 
 # Remove old container if it exists
 if docker_cmd ps -a --format '{{.Names}}' | grep -qx "$CONTAINER_NAME"; then
@@ -157,20 +177,14 @@ elif [ -n "${MSYSTEM:-}" ] || [ -n "${USERPROFILE:-}" ]; then
 	done
 fi
 
-echo "PowerShell profile setup:"
 if [ -n "$_pwsh" ]; then
-	echo "  pwsh: $_pwsh"
+	[ "$VERBOSE" = 1 ] && echo "PowerShell: using $_pwsh"
 	_ps_profile_raw="$("$_pwsh" -NoProfile -Command '$PROFILE' 2>/dev/null | tr -d '\r' || true)"
-	echo "  \$PROFILE (raw): ${_ps_profile_raw:-<empty>}"
+	[ "$VERBOSE" = 1 ] && echo "PowerShell \$PROFILE: ${_ps_profile_raw:-<empty>}"
 	if [ -n "$_ps_profile_raw" ]; then
 		_ps_profile="$(cygpath -u "$_ps_profile_raw" 2>/dev/null || echo "$_ps_profile_raw")"
-		echo "  \$PROFILE (unix): $_ps_profile"
+		[ "$VERBOSE" = 1 ] && echo "PowerShell profile (unix): $_ps_profile"
 		mkdir -p "$(dirname "$_ps_profile")"
-		if [ -f "$_ps_profile" ]; then
-			echo "  Profile exists: yes ($(wc -l < "$_ps_profile") lines)"
-		else
-			echo "  Profile exists: no (will create)"
-		fi
 		if ! grep -q 'function sqrbx ' "$_ps_profile" 2>/dev/null; then
 			cat >> "$_ps_profile" <<-'PSEOF'
 
@@ -181,24 +195,17 @@ if [ -n "$_pwsh" ]; then
 			function squarebox-rebuild { bash "$HOME/squarebox/install.sh" }
 			PSEOF
 			if grep -q 'function sqrbx ' "$_ps_profile" 2>/dev/null; then
-				echo "  => Added and verified squarebox functions in: $_ps_profile"
+				echo "Added squarebox functions to PowerShell profile."
 			else
-				echo "  => ERROR: wrote to $_ps_profile but functions not found after write!"
+				echo "Warning: failed to write squarebox functions to PowerShell profile." >&2
+				[ "$VERBOSE" = 1 ] && echo "  Tried to write to: $_ps_profile" >&2
 			fi
-			echo "  Restart PowerShell to use them."
-			echo "  Note: if profile doesn't load, run: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned"
-		else
-			echo "  => Functions already present, skipping."
 		fi
 	else
-		echo "  => WARNING: pwsh returned empty \$PROFILE path."
+		echo "Warning: pwsh found but \$PROFILE returned empty — skipping PowerShell profile setup."
 	fi
-else
-	if [ -n "${MSYSTEM:-}" ] || [ -n "${USERPROFILE:-}" ]; then
-		echo "  pwsh not found on PATH or in standard locations — skipping."
-	else
-		echo "  pwsh not found (not a Windows environment) — skipping."
-	fi
+elif [ -n "${MSYSTEM:-}" ] || [ -n "${USERPROFILE:-}" ]; then
+	[ "$VERBOSE" = 1 ] && echo "PowerShell: pwsh not found on PATH or in standard locations — skipping."
 fi
 
 # Prepare host directories
