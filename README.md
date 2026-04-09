@@ -38,6 +38,10 @@ Install
 
 Stable installs the latest tagged release (pre-release tags like `-rc` are skipped). Edge uses the latest commit on main.
 
+If the install fails or you want to see the full docker build and git output, re-run with `--verbose`:
+
+    curl -fsSL https://raw.githubusercontent.com/SquareWaveSystems/squarebox/main/install.sh | bash -s -- --verbose
+
 This clones the repo, builds the Docker image, and drops you into the container (if possible).
 On first login, a setup script runs automatically to configure git (pulling your
 name and email from the host's global git config if available), GitHub CLI, your
