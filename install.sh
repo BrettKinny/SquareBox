@@ -144,7 +144,7 @@ fi
 # Query pwsh for the actual $PROFILE path since Documents may be redirected (e.g. OneDrive).
 _pwsh=""
 if command -v pwsh &>/dev/null; then
-	_pwsh="pwsh"
+	_pwsh="$(command -v pwsh)"
 elif [ -n "${MSYSTEM:-}" ] || [ -n "${USERPROFILE:-}" ]; then
 	# pwsh is often not on Git Bash's PATH — search common Windows install locations
 	for _candidate in \
