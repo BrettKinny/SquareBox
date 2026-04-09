@@ -57,12 +57,14 @@ Enter
 Sleep 3s
 
 # --- Terminal multiplexer (gum choose --no-limit) ---
-# Select none — just confirm
+# Select tmux (1st item)
+Sleep 500ms
+Space
 Sleep 500ms
 Enter
 
-# Wait briefly (no installs)
-Sleep 1s
+# Wait for multiplexer "install" (1 spinner)
+Sleep 2s
 
 # --- SDKs (gum choose --no-limit) ---
 # Select Node.js (1st) and Python (2nd)
