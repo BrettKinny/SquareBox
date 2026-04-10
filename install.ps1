@@ -47,10 +47,18 @@ $installSh  = Join-Path $InstallDir 'install.sh'
 if (Test-Path $installSh) {
     & $bash $installSh @installArgs
 } else {
-    # First install: pipe install.sh from GitHub (it clones the repo)
+    # First install: download install.sh to a temp file and execute it.
+    # Piping a string through PowerShell to bash can introduce CRLF / encoding
+    # changes that break bash parsing. Using a temp file keeps the script
+    # byte-identical to what the server sent.
     $url = 'https://raw.githubusercontent.com/SquareWaveSystems/squarebox/main/install.sh'
-    $script = (Invoke-WebRequest -Uri $url -UseBasicParsing).Content
-    $script | & $bash -s -- @installArgs
+    $tmp = Join-Path ([System.IO.Path]::GetTempPath()) 'squarebox-install.sh'
+    try {
+        Invoke-WebRequest -Uri $url -UseBasicParsing -OutFile $tmp
+        & $bash $tmp @installArgs
+    } finally {
+        Remove-Item $tmp -ErrorAction SilentlyContinue
+    }
 }
 if ($LASTEXITCODE -ne 0) {
     Write-Error "install.sh failed (exit code $LASTEXITCODE)"
@@ -72,7 +80,7 @@ if (Test-Path $PROFILE) {
         if ($line -match '^# >>> squarebox >>>') { $skip = $true; continue }
         if ($line -match '^# <<< squarebox <<<') { $skip = $false; continue }
         if ($skip) { continue }
-        if ($line -match '^\s*function\s+(sqrbx|squarebox|sqrbx-rebuild|squarebox-rebuild)\s') { continue }
+        if ($line -match '^\s*function\s+(sqrbx|squarebox|sqrbx-rebuild|squarebox-rebuild)\s*(\{|$)') { continue }
         $filtered.Add($line)
     }
     Set-Content -Path $PROFILE -Value ($filtered -join "`n")
@@ -80,7 +88,6 @@ if (Test-Path $PROFILE) {
 
 # Append managed block
 @'
-
 # >>> squarebox >>>
 # squarebox shell integration — managed by install.ps1.
 Remove-Item Alias:sqrbx, Alias:squarebox, Alias:sqrbx-rebuild, Alias:squarebox-rebuild -ErrorAction SilentlyContinue
