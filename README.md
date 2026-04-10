@@ -67,7 +67,7 @@ If the install fails or you want to see the full docker build and git output, re
 
 **Windows (PowerShell 7+)**
 
-Windows users can install directly from PowerShell — no Git Bash required.
+Windows users can install directly from PowerShell - no Git Bash required.
 This handles clone, build, container creation, and PowerShell aliases
 (`sqrbx`, `squarebox`, etc.) natively:
 
@@ -79,7 +79,7 @@ Once installed, you can re-run or pass flags from the local copy:
     .\install.ps1 -Edge        # latest main instead of latest release
     .\install.ps1 -Verbose     # show full build output
 
-> **Note:** `irm ... | iex` does not support flags — PowerShell interprets them
+> **Note:** `irm ... | iex` does not support flags - PowerShell interprets them
 > as arguments to `Invoke-Expression`, not the script. Use the local
 > `.\install.ps1` form for `-Edge` or `-Verbose`.
 
