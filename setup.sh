@@ -112,6 +112,7 @@ fi
 
 # GitHub CLI (optional — users who don't use GitHub can skip this)
 if gh auth status &>/dev/null; then
+	rm -f "$GH_SKIP_MARKER"
 	echo "GitHub CLI: already authenticated"
 elif [ -f "$GH_SKIP_MARKER" ]; then
 	echo "GitHub CLI: sign-in skipped (run 'gh auth login' to change)"
@@ -134,7 +135,7 @@ elif $INTERACTIVE; then
 		# Persist gh config for future rebuilds (only if auth succeeded)
 		if gh auth status &>/dev/null; then
 			mkdir -p "$GH_PERSIST"
-			cp -r ~/.config/gh/* "$GH_PERSIST"/
+			cp -r ~/.config/gh/. "$GH_PERSIST"/
 			rm -f "$GH_SKIP_MARKER"
 		else
 			echo "GitHub CLI auth was not completed — skipping config persistence"
