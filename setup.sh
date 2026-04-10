@@ -1168,7 +1168,7 @@ done
 echo
 
 if $HAS_GUM; then
-	gum style --border double --padding "0 2" --border-foreground 208 "🟧📦 You're in the box."
+	gum style --border double --padding "0 2" --border-foreground 208 "🟧📦 All boxed up."
 else
-	echo "🟧📦 You're in the box."
+	echo "🟧📦 All boxed up."
 fi
