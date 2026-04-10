@@ -25,37 +25,45 @@ $InstallDir  = Join-Path $env:USERPROFILE 'squarebox'
 $ImageName   = 'squarebox'
 $ContainerName = 'squarebox'
 
-# --- Verify prerequisites ---
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    Write-Error "Git is not installed. See https://git-scm.com/download/win"
-    exit 1
-}
-if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Write-Error "Docker is not installed. See https://docs.docker.com/get-docker/"
-    exit 1
-}
-try { docker info 2>$null | Out-Null } catch {}
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Docker daemon is not running or current user lacks permissions."
+# Write-Error with $ErrorActionPreference='Stop' becomes a terminating error
+# before exit runs, showing an ugly exception trace. This helper prints a clean
+# error message and exits with code 1.
+function Abort([string]$msg) {
+    Write-Host "Error: $msg" -ForegroundColor Red
     exit 1
 }
 
+# --- Verify prerequisites ---
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    Abort "Git is not installed. See https://git-scm.com/download/win"
+}
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    Abort "Docker is not installed. See https://docs.docker.com/get-docker/"
+}
+try { docker info 2>$null | Out-Null } catch {}
+if ($LASTEXITCODE -ne 0) {
+    Abort "Docker daemon is not running or current user lacks permissions."
+}
+
 # --- Clone or update ---
+$gitQuiet = if ($Verbose) { @() } else { @('--quiet') }
 if (Test-Path (Join-Path $InstallDir '.git')) {
     Write-Host "Updating existing install..."
-    $gitQuiet = if ($Verbose) { @() } else { @('--quiet') }
     git -C $InstallDir fetch --tags --force @gitQuiet origin
+    if ($LASTEXITCODE -ne 0) { Abort "git fetch failed." }
 } else {
     Write-Host "Cloning squarebox..."
-    $gitQuiet = if ($Verbose) { @() } else { @('--quiet') }
     git clone @gitQuiet $Repo $InstallDir
+    if ($LASTEXITCODE -ne 0) { Abort "git clone failed." }
 }
 
 # --- Select version ---
 if ($Edge) {
     Write-Host "Using latest main (edge)..."
     git -C $InstallDir checkout main --quiet
+    if ($LASTEXITCODE -ne 0) { Abort "git checkout main failed." }
     git -C $InstallDir reset --hard --quiet origin/main
+    if ($LASTEXITCODE -ne 0) { Abort "git reset failed." }
 } else {
     $latestTag = git -C $InstallDir tag --sort=-v:refname |
         Where-Object { $_ -notmatch '-rc' } |
@@ -63,10 +71,13 @@ if ($Edge) {
     if ($latestTag) {
         Write-Host "Using release $latestTag..."
         git -C $InstallDir checkout $latestTag --quiet
+        if ($LASTEXITCODE -ne 0) { Abort "git checkout $latestTag failed." }
     } else {
         Write-Host "No releases found, using main branch..."
         git -C $InstallDir checkout main --quiet
+        if ($LASTEXITCODE -ne 0) { Abort "git checkout main failed." }
         git -C $InstallDir reset --hard --quiet origin/main
+        if ($LASTEXITCODE -ne 0) { Abort "git reset failed." }
     }
 }
 
@@ -75,12 +86,13 @@ Write-Host "Building image... " -NoNewline
 if ($Verbose) {
     Write-Host ""
     docker build -t $ImageName $InstallDir
+    if ($LASTEXITCODE -ne 0) { Abort "Docker build failed." }
 } else {
     $buildLog = docker build -t $ImageName $InstallDir 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Host "FAILED" -ForegroundColor Red
-        Write-Error "Build output:`n$($buildLog -join "`n")"
-        exit 1
+        Write-Host ($buildLog -join "`n")
+        Abort "Docker build failed."
     }
     Write-Host "done"
 }
@@ -155,8 +167,7 @@ $dockerOpts = @(
 
 $createResult = docker create -it --name $ContainerName @dockerOpts @dockerVolumes $ImageName 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to create container '$ContainerName':`n$createResult"
-    exit 1
+    Abort "Failed to create container '$ContainerName':`n$createResult"
 }
 
 # --- PowerShell profile setup ---
