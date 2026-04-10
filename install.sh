@@ -43,7 +43,7 @@ if [ -n "${USERPROFILE:-}" ]; then
 		USER_HOME="${USERPROFILE//\\//}"
 		# /c/Users/... → C:/Users/...
 		if [[ "$USER_HOME" =~ ^/([a-zA-Z])(/.*)$ ]]; then
-			USER_HOME="${BASH_REMATCH[1]^}:${BASH_REMATCH[2]}"
+			USER_HOME="$(printf '%s' "${BASH_REMATCH[1]}" | tr '[:lower:]' '[:upper:]'):${BASH_REMATCH[2]}"
 		fi
 	fi
 else
