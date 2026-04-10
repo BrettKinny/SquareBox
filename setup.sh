@@ -63,9 +63,9 @@ run_with_spinner() {
 }
 
 if $HAS_GUM; then
-	gum style --border double --padding "0 2" --border-foreground 208 "squarebox setup"
+	gum style --border double --padding "0 2" --border-foreground 208 "📦 squarebox setup"
 else
-	echo "=== squarebox setup ==="
+	echo "=== 📦 squarebox setup ==="
 fi
 echo
 
@@ -1168,7 +1168,7 @@ done
 echo
 
 if $HAS_GUM; then
-	gum style --border double --padding "0 2" --border-foreground 208 "🟧📦 All boxed up."
+	gum style --border double --padding "0 2" --border-foreground 208 "All boxed up 📦"
 else
-	echo "🟧📦 All boxed up."
+	echo "All boxed up 📦"
 fi
