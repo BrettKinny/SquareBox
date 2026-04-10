@@ -93,7 +93,8 @@ fi
 # Build
 _build_log="$(mktemp)"
 _rc_tmp=""
-trap 'rm -f "$_build_log" "$_rc_tmp" 2>/dev/null || true' EXIT
+_create_log=""
+trap 'rm -f "$_build_log" "$_rc_tmp" "$_create_log" 2>/dev/null || true' EXIT
 if [ "$VERBOSE" = 1 ]; then
 	echo "Building image..."
 	docker_cmd build -t "$IMAGE_NAME" "$INSTALL_DIR"
@@ -312,6 +313,23 @@ fi
 # Prepare host directories
 mkdir -p "${USER_HOME}/.config/git" "${INSTALL_DIR}/workspace" "${INSTALL_DIR}/.config/lazygit"
 
+# On Linux where host uid != 1000, a previous install may have chowned these
+# paths to 1000:1000 (for the container's `dev` user). On this run we need to
+# write to them as the host user first, so reclaim ownership before the writes.
+# The final chown-to-1000 still happens further down.
+if [ "$(uname -s)" = "Linux" ] && [ "$(id -u)" -ne 1000 ]; then
+	_reclaim_paths=(
+		"${USER_HOME}/.config/git"
+		"${INSTALL_DIR}/workspace"
+		"${INSTALL_DIR}/.config"
+	)
+	if [ "$(id -u)" -eq 0 ]; then
+		chown -R "$(id -u):$(id -g)" "${_reclaim_paths[@]}" 2>/dev/null || true
+	elif command -v sudo &>/dev/null; then
+		sudo chown -R "$(id -u):$(id -g)" "${_reclaim_paths[@]}" 2>/dev/null || true
+	fi
+fi
+
 # Propagate host git identity into the container's config directory.
 # This avoids fragile file mounts on Windows/MSYS2 and prevents leaking
 # credential helpers or tokens from the host's full git config.
@@ -398,10 +416,15 @@ fi
 # Drop all Linux capabilities except those needed for scoped sudo
 DOCKER_OPTS+=(--cap-drop=ALL --cap-add=CHOWN --cap-add=DAC_OVERRIDE --cap-add=FOWNER --cap-add=SETUID --cap-add=SETGID --cap-add=KILL)
 
-docker_cmd create -it --name "$CONTAINER_NAME" \
+_create_log="$(mktemp)"
+if ! docker_cmd create -it --name "$CONTAINER_NAME" \
 	"${DOCKER_OPTS[@]}" \
 	"${DOCKER_VOLUMES[@]}" \
-	"$IMAGE_NAME" > /dev/null
+	"$IMAGE_NAME" > "$_create_log" 2>&1; then
+	echo "Error: failed to create container '$CONTAINER_NAME'." >&2
+	cat "$_create_log" >&2
+	exit 1
+fi
 
 if [ -t 0 ]; then
 	docker_interactive start -ai "$CONTAINER_NAME"
