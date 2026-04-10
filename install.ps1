@@ -37,6 +37,9 @@ if (-not $bash) {
 }
 
 # --- Run install.sh (clone, build, container, bash profile) ---
+# Use --login so Git Bash sources /etc/profile, which adds /usr/bin to PATH.
+# Without this, cygpath and other MSYS2 tools may not be available when bash
+# is invoked non-interactively from PowerShell.
 $installArgs = @('--no-pwsh')
 if ($Edge)    { $installArgs += '--edge' }
 if ($Verbose) { $installArgs += '--verbose' }
@@ -45,7 +48,7 @@ $InstallDir = Join-Path $env:USERPROFILE 'squarebox'
 $installSh  = Join-Path $InstallDir 'install.sh'
 
 if (Test-Path $installSh) {
-    & $bash $installSh @installArgs
+    & $bash --login $installSh @installArgs
 } else {
     # First install: download install.sh to a temp file and execute it.
     # Piping a string through PowerShell to bash can introduce CRLF / encoding
@@ -55,7 +58,7 @@ if (Test-Path $installSh) {
     $tmp = Join-Path ([System.IO.Path]::GetTempPath()) 'squarebox-install.sh'
     try {
         Invoke-WebRequest -Uri $url -UseBasicParsing -OutFile $tmp
-        & $bash $tmp @installArgs
+        & $bash --login $tmp @installArgs
     } finally {
         Remove-Item $tmp -ErrorAction SilentlyContinue
     }

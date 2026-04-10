@@ -32,8 +32,20 @@ docker_interactive() {
 # instead so the install lands at a normal location (C:\Users\user\squarebox).
 # Mixed-mode (C:/Users/...) keeps paths compatible with both bash and Docker —
 # MSYS2-format (/c/Users/...) breaks Docker when MSYS_NO_PATHCONV=1 is set.
+#
+# When Git Bash is invoked non-interactively from PowerShell (& bash.exe script),
+# /etc/profile isn't sourced and cygpath may not be on PATH. The fallback converts
+# MSYS2 POSIX paths (/c/Users/...) and Windows backslash paths (C:\Users\...)
+# to mixed-mode manually.
 if [ -n "${USERPROFILE:-}" ]; then
-	USER_HOME="$(cygpath -m "$USERPROFILE" 2>/dev/null || echo "$USERPROFILE")"
+	USER_HOME="$(cygpath -m "$USERPROFILE" 2>/dev/null || true)"
+	if [ -z "$USER_HOME" ]; then
+		USER_HOME="${USERPROFILE//\\//}"
+		# /c/Users/... → C:/Users/...
+		if [[ "$USER_HOME" =~ ^/([a-zA-Z])(/.*)$ ]]; then
+			USER_HOME="${BASH_REMATCH[1]^}:${BASH_REMATCH[2]}"
+		fi
+	fi
 else
 	USER_HOME="${HOME}"
 fi
@@ -267,7 +279,7 @@ _host_name="$(git config --global user.name 2>/dev/null || true)"
 _host_email="$(git config --global user.email 2>/dev/null || true)"
 
 if [ -z "$_host_name" ] && [ -n "${USERPROFILE:-}" ]; then
-	_win_gitcfg="$(cygpath -m "$USERPROFILE" 2>/dev/null || echo "$USERPROFILE")/.gitconfig"
+	_win_gitcfg="${USER_HOME}/.gitconfig"
 	if [ -f "$_win_gitcfg" ]; then
 		_host_name="$(git config --file "$_win_gitcfg" user.name 2>/dev/null || true)"
 		_host_email="$(git config --file "$_win_gitcfg" user.email 2>/dev/null || true)"
