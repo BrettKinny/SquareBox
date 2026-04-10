@@ -139,15 +139,23 @@ fi
 #    versions gets scrubbed on every run — critical because an old alias
 #    shadows the new function definition at parse time (expand_aliases is on
 #    in interactive bash), producing a `syntax error near unexpected token '('`.
-SQRBX_INIT="${USER_HOME}/.squarebox-shell-init"
-cat > "$SQRBX_INIT" <<'SQRBXEOF'
+#
+# The init file lives under $HOME (not $USER_HOME): on Git Bash these diverge
+# (HOME=/home/user, USER_HOME=C:/Users/... from USERPROFILE), and the sentinel
+# in $SHELL_RC sources `$HOME/.squarebox-shell-init` at shell startup — the
+# init file must live where the running shell looks for it. The install dir
+# itself still lives under USER_HOME, so INSTALL_DIR is baked into the body
+# of sqrbx-rebuild below (unquoted heredoc) rather than using a runtime
+# `$HOME/squarebox/install.sh` which would be wrong on Git Bash.
+SQRBX_INIT="${HOME}/.squarebox-shell-init"
+cat > "$SQRBX_INIT" <<SQRBXEOF
 # Managed by squarebox install.sh — overwritten on every install.
 # Drop any stale aliases with these names so they don't shadow the functions.
 unalias sqrbx squarebox sqrbx-rebuild squarebox-rebuild 2>/dev/null || true
-sqrbx() { if command -v winpty &>/dev/null && [[ -n "${MSYSTEM:-}" ]]; then winpty docker start -ai squarebox; else docker start -ai squarebox; fi; }
-squarebox() { sqrbx "$@"; }
-sqrbx-rebuild() { "$HOME/squarebox/install.sh" "$@"; }
-squarebox-rebuild() { sqrbx-rebuild "$@"; }
+sqrbx() { if command -v winpty &>/dev/null && [[ -n "\${MSYSTEM:-}" ]]; then winpty docker start -ai squarebox; else docker start -ai squarebox; fi; }
+squarebox() { sqrbx "\$@"; }
+sqrbx-rebuild() { "${INSTALL_DIR}/install.sh" "\$@"; }
+squarebox-rebuild() { sqrbx-rebuild "\$@"; }
 SQRBXEOF
 
 # Scrub legacy content from $SHELL_RC and append a fresh sentinel block that
@@ -173,10 +181,21 @@ SQRBXRCEOF
 
 echo "Installed squarebox shell integration → $SHELL_RC"
 
-# Self-check: catch future regressions that would break the rc file at source time.
-if ! bash -n "$SHELL_RC" 2>/dev/null; then
-	echo "Warning: $SHELL_RC fails bash syntax check after edit — please inspect." >&2
-fi
+# Self-check: catch future regressions that would break the rc file at source
+# time. Use the matching shell's parser — bash -n rejects valid zsh syntax
+# (setopt, glob qualifiers, etc.) and would trigger false warnings for zsh users.
+case "$SHELL_RC" in
+	*.bashrc|*.bash_profile|*/.bashrc|*/.bash_profile)
+		if ! bash -n "$SHELL_RC" 2>/dev/null; then
+			echo "Warning: $SHELL_RC fails bash syntax check after edit — please inspect." >&2
+		fi
+		;;
+	*.zshrc|*.zprofile|*/.zshrc|*/.zprofile)
+		if command -v zsh >/dev/null 2>&1 && ! zsh -n "$SHELL_RC" 2>/dev/null; then
+			echo "Warning: $SHELL_RC fails zsh syntax check after edit — please inspect." >&2
+		fi
+		;;
+esac
 # end squarebox shell integration
 
 # Git Bash on Windows opens a login shell which reads .bash_profile (not
@@ -238,7 +257,7 @@ if [ -n "$_pwsh" ]; then
 		# Sanity check: a real profile path lives under Documents/PowerShell or
 		# Documents/WindowsPowerShell. Guards against stray bytes producing bogus paths.
 		case "$_ps_profile" in
-			*/Documents/PowerShell/*|*/Documents/WindowsPowerShell/*|*/PowerShell/*) ;;
+			*/Documents/PowerShell/*|*/Documents/WindowsPowerShell/*) ;;
 			*)
 				echo "Warning: pwsh returned unexpected profile path ($_ps_profile) — skipping PowerShell profile setup." >&2
 				_ps_profile=""

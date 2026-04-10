@@ -70,8 +70,18 @@ jobs:
           # Verify install.sh's shell-integration block by running it against a
           # fixture rc file that contains legacy cruft from pre-646a589 installs.
           # Regression guard for the "alias shadows function ⇒ parse error" bug.
+          #
+          # The fixture deliberately sets HOME and USER_HOME to DIFFERENT temp
+          # dirs to simulate the Git Bash scenario (HOME=/home/user vs
+          # USER_HOME=C:/Users/...). This catches regressions where install.sh
+          # confuses the two — the init file must land under HOME (where the
+          # shell looks for it) while the install dir lives under USER_HOME
+          # and must be baked into sqrbx-rebuild at install time.
           export HOME="$(mktemp -d)"
-          export USER_HOME="$HOME"
+          export USER_HOME="$(mktemp -d)"
+          export INSTALL_DIR="$USER_HOME/squarebox"
+          mkdir -p "$INSTALL_DIR"
+          cp install.sh "$INSTALL_DIR/install.sh"
           SHELL_RC="$HOME/.bashrc"
           cat > "$SHELL_RC" <<'LEGACY'
           # Existing user content
@@ -89,9 +99,17 @@ jobs:
           awk '/^# Shell config must go/{f=1} f{print; if (/^# end squarebox shell integration$/) exit}' install.sh > /tmp/shell_block.sh
           bash /tmp/shell_block.sh
 
-          # Assertions
-          test -f "$HOME/.squarebox-shell-init" || { echo "FAIL: init file not created"; exit 1; }
+          # Assertions — init file lives under HOME, not USER_HOME
+          test -f "$HOME/.squarebox-shell-init" || { echo "FAIL: init file not created under HOME"; exit 1; }
+          test -f "$USER_HOME/.squarebox-shell-init" && { echo "FAIL: init file wrongly created under USER_HOME"; exit 1; }
           grep -q '^sqrbx() {' "$HOME/.squarebox-shell-init" || { echo "FAIL: sqrbx function missing"; exit 1; }
+          # sqrbx-rebuild must reference $INSTALL_DIR (USER_HOME-based), not $HOME
+          grep -qF "\"$INSTALL_DIR/install.sh\"" "$HOME/.squarebox-shell-init" || { echo "FAIL: sqrbx-rebuild does not reference INSTALL_DIR"; exit 1; }
+          grep -q "\$HOME/squarebox/install.sh" "$HOME/.squarebox-shell-init" && { echo "FAIL: sqrbx-rebuild still uses \$HOME/squarebox (HOME != USER_HOME mismatch)"; exit 1; }
+          # Literal $@ and ${MSYSTEM:-} should be preserved in the init file (runtime expansion)
+          grep -q '\$@' "$HOME/.squarebox-shell-init" || { echo "FAIL: \$@ not preserved in init file"; exit 1; }
+          grep -q '\${MSYSTEM:-}' "$HOME/.squarebox-shell-init" || { echo "FAIL: \${MSYSTEM:-} not preserved in init file"; exit 1; }
+
           grep -q '^# >>> squarebox >>>' "$SHELL_RC" || { echo "FAIL: sentinel block missing from rc"; exit 1; }
           grep -q 'squarebox-shell-init' "$SHELL_RC" || { echo "FAIL: rc does not source init file"; exit 1; }
           grep -q "^alias sqrbx=" "$SHELL_RC" && { echo "FAIL: legacy alias not scrubbed"; exit 1; }
