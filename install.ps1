@@ -42,7 +42,13 @@ $hasDocker = [bool](Get-Command docker -ErrorAction SilentlyContinue)
 $hasPodman = [bool](Get-Command podman -ErrorAction SilentlyContinue)
 
 if ($env:SQUAREBOX_RUNTIME) {
+    if ($env:SQUAREBOX_RUNTIME -notin @('docker', 'podman')) {
+        Abort "SQUAREBOX_RUNTIME must be 'docker' or 'podman' (got '$($env:SQUAREBOX_RUNTIME)')."
+    }
     $Runtime = $env:SQUAREBOX_RUNTIME
+    if (-not (Get-Command $Runtime -ErrorAction SilentlyContinue)) {
+        Abort "SQUAREBOX_RUNTIME=$Runtime but '$Runtime' is not installed."
+    }
 } elseif ($hasDocker -and $hasPodman) {
     Write-Host "Both Docker and Podman detected."
     Write-Host "  1) Docker"

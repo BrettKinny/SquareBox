@@ -99,7 +99,14 @@ _has_docker=0; command -v docker &>/dev/null && _has_docker=1
 _has_podman=0; command -v podman &>/dev/null && _has_podman=1
 
 if [ -n "${SQUAREBOX_RUNTIME:-}" ]; then
-	RUNTIME="$SQUAREBOX_RUNTIME"
+	case "$SQUAREBOX_RUNTIME" in
+		docker|podman) RUNTIME="$SQUAREBOX_RUNTIME" ;;
+		*) echo "Error: SQUAREBOX_RUNTIME must be 'docker' or 'podman' (got '$SQUAREBOX_RUNTIME')." >&2; exit 1 ;;
+	esac
+	if ! command -v "$RUNTIME" &>/dev/null; then
+		echo "Error: SQUAREBOX_RUNTIME=$RUNTIME but '$RUNTIME' is not installed." >&2
+		exit 1
+	fi
 elif [ "$_has_docker" = 1 ] && [ "$_has_podman" = 1 ]; then
 	if [ -t 0 ]; then
 		echo "Both Docker and Podman detected."
@@ -279,7 +286,16 @@ mkdir -p "${USER_HOME}/.config/git" "${INSTALL_DIR}/workspace" "${INSTALL_DIR}/.
 # guarded by `[ ! -f ]` so only fire on first install where we just mkdir'd
 # the dir as the current user. The final chown-to-1000 still runs further down.
 # Podman: rootless Podman maps UIDs via user namespaces, so this is unnecessary.
-if [ "$RUNTIME" = "docker" ] && [ "$(uname -s)" = "Linux" ] && [ "$(id -u)" -ne 1000 ] && [ ! -w "${USER_HOME}/.config/git" ]; then
+# Rootful Podman behaves like Docker — chown is still needed.
+_needs_chown=0
+if [ "$(uname -s)" = "Linux" ] && [ "$(id -u)" -ne 1000 ]; then
+	if [ "$RUNTIME" = "docker" ]; then
+		_needs_chown=1
+	elif [ "$RUNTIME" = "podman" ] && podman info --format '{{.Host.Security.Rootless}}' 2>/dev/null | grep -qi false; then
+		_needs_chown=1
+	fi
+fi
+if [ "$_needs_chown" = 1 ] && [ ! -w "${USER_HOME}/.config/git" ]; then
 	if [ "$(id -u)" -eq 0 ]; then
 		chown -R "$(id -u):$(id -g)" "${USER_HOME}/.config/git"
 	elif command -v sudo &>/dev/null; then
@@ -333,7 +349,8 @@ fi
 # and harmful (uid 1000 typically doesn't exist on the host).
 # Podman: rootless Podman maps UIDs via user namespaces automatically — the
 # container's uid 1000 maps to the invoking user. Chowning is unnecessary.
-if [ "$RUNTIME" = "docker" ] && [ "$(uname -s)" = "Linux" ] && [ "$(id -u)" -ne 1000 ]; then
+# Rootful Podman behaves like Docker and still needs the chown.
+if [ "$_needs_chown" = 1 ]; then
 	_chown_paths=(
 		"${USER_HOME}/.config/git"
 		"${INSTALL_DIR}/workspace"
