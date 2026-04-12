@@ -115,7 +115,7 @@ COPY scripts/squarebox-update.sh /usr/local/bin/sqrbx-update
 COPY scripts/squarebox-setup.sh /usr/local/bin/sqrbx-setup
 COPY scripts/lib/tools.yaml /usr/local/lib/squarebox/tools.yaml
 COPY scripts/lib/tool-lib.sh /usr/local/lib/squarebox/tool-lib.sh
-RUN chmod +x /usr/local/bin/sqrbx-update /usr/local/bin/sqrbx-setup
+RUN chmod +x /home/dev/setup.sh /usr/local/bin/sqrbx-update /usr/local/bin/sqrbx-setup
 
 RUN chown -R dev:dev /home/dev/.config /home/dev/.claude \
 	&& mkdir -p /workspace && chown dev:dev /workspace

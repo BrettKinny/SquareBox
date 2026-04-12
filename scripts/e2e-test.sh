@@ -303,7 +303,7 @@ suite_setup_rerun() {
 		echo "ok ${TEST_NUM} - 9.5 sqrbx-setup rejects invalid section"
 	fi
 
-	# setup.sh accepts --rerun flag without error (non-interactive, no sections = no-op)
+	# setup.sh accepts --rerun with a valid section without error (non-interactive)
 	run_test "9.6 setup.sh --rerun parses cleanly" bash -c '~/setup.sh --rerun git </dev/null'
 }
 

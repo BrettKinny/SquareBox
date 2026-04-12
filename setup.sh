@@ -125,16 +125,18 @@ if should_run git; then
 				name=$(gum input --value "$_current_name" --header "Git name:" --width 40) || name="$_current_name"
 			else
 				read -rp "Git name [$_current_name]: " name
-				[ -z "$name" ] && name="$_current_name"
 			fi
+			# Empty input (cleared gum value or blank read) keeps the current value
+			[ -z "$name" ] && name="$_current_name"
 			git config --file ~/.config/git/config user.name "$name"
 			if $HAS_GUM; then
 				email=$(gum input --value "$_current_email" --header "Git email:" --width 40) || email="$_current_email"
 			else
 				read -rp "Git email [$_current_email]: " email
-				[ -z "$email" ] && email="$_current_email"
 			fi
-			git config --file ~/.config/git/config user.email "$email"
+			[ -z "$email" ] && email="$_current_email"
+			# Only write email if we have a non-empty value (preserves "unset" state)
+			[ -n "$email" ] && git config --file ~/.config/git/config user.email "$email"
 		fi
 	else
 		if [ -z "$_current_name" ]; then
