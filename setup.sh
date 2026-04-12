@@ -1351,26 +1351,37 @@ else
 fi
 
 _install_zsh_inner() {
-	sudo apt-get update -qq && sudo apt-get install -y -qq zsh >/dev/null 2>&1
+	sudo apt-get update -qq && sudo apt-get install -y -qq zsh >/dev/null 2>&1 || return 1
+	command -v zsh >/dev/null 2>&1 || return 1
 	# Trust boundary: the Oh My Zsh installer manages its own files via HTTPS.
-	# RUNZSH=no prevents launching a subshell, CHSH=no skips the chsh prompt
-	# (we handle shell switching via the .squarebox-use-zsh marker), and
-	# KEEP_ZSHRC=yes prevents it from writing a .zshrc we'd immediately overwrite.
-	if [ ! -d "$HOME/.oh-my-zsh" ]; then
+	# We resolve the latest release tag at setup time (matching the trust model
+	# used elsewhere in setup.sh for optional tools) instead of tracking master,
+	# so the fetched installer is pinned to a known release rather than a
+	# moving branch. RUNZSH=no prevents launching a subshell, CHSH=no skips the
+	# chsh prompt (we handle shell switching via the .squarebox-use-zsh
+	# marker), and KEEP_ZSHRC=yes prevents it from writing a .zshrc we'd
+	# immediately overwrite.
+	if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
+		local omz_tag omz_ref
+		omz_tag=$(sb_gh_latest_tag ohmyzsh/ohmyzsh 2>/dev/null || true)
+		omz_ref="${omz_tag:-master}"
 		RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
-			sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended >/dev/null 2>&1
+			sh -c "$(curl -fsSL "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/${omz_ref}/tools/install.sh")" "" --unattended >/dev/null 2>&1 || return 1
 	fi
+	[ -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ] || return 1
 	local custom="$HOME/.oh-my-zsh/custom"
 	if [ ! -d "$custom/plugins/zsh-autosuggestions" ]; then
 		git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
-			"$custom/plugins/zsh-autosuggestions" >/dev/null 2>&1
+			"$custom/plugins/zsh-autosuggestions" >/dev/null 2>&1 || return 1
 	fi
 	if [ ! -d "$custom/plugins/zsh-syntax-highlighting" ]; then
 		git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
-			"$custom/plugins/zsh-syntax-highlighting" >/dev/null 2>&1
+			"$custom/plugins/zsh-syntax-highlighting" >/dev/null 2>&1 || return 1
 	fi
+	[ -d "$custom/plugins/zsh-autosuggestions" ] || return 1
+	[ -d "$custom/plugins/zsh-syntax-highlighting" ] || return 1
 	# Generate ~/.zshrc that mirrors ~/.bashrc, layered on Oh My Zsh.
-	cat > "$HOME/.zshrc" <<-'ZSHRC'
+	cat > "$HOME/.zshrc" <<-'ZSHRC' || return 1
 		# squarebox zsh config (experimental) — mirrors ~/.bashrc
 		export ZSH="$HOME/.oh-my-zsh"
 		ZSH_THEME=""
@@ -1402,13 +1413,13 @@ _install_zsh_inner() {
 		export PATH="$HOME/.local/bin:$PATH"
 		[ -x ~/motd.sh ] && ~/motd.sh
 	ZSHRC
+	[ -f "$HOME/.zshrc" ] || return 1
 }
 
 install_zsh() {
-	if command -v zsh &>/dev/null && [ -d "$HOME/.oh-my-zsh" ] && [ -f "$HOME/.zshrc" ]; then
-		echo "Zsh already configured, skipping."
-		return 0
-	fi
+	# Always invoke the inner installer: each step is idempotent (guards with
+	# `-d` / `-f` before apt/curl/clone), and running it every time ensures any
+	# missing plugins from a previous partial install get re-cloned.
 	run_with_spinner "Installing Zsh + Oh My Zsh..." _install_zsh_inner
 }
 
@@ -1416,7 +1427,7 @@ case "$shell_choice" in
 	zsh)
 		if install_zsh; then
 			touch ~/.squarebox-use-zsh
-			echo "Zsh will be used on the next shell start."
+			echo "Zsh will take over at the end of this setup (next interactive shell)."
 		else
 			echo "Warning: Zsh installation failed; staying on bash."
 			rm -f ~/.squarebox-use-zsh
