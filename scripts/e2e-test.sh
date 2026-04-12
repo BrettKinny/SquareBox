@@ -78,6 +78,12 @@ suite_tools() {
 
 	# 5.10 fzf version
 	run_test "5.10 fzf --version" fzf --version
+
+	# 5.13 just version
+	run_test "5.13 just --version" just --version
+
+	# 5.14 difftastic version (binary is named `difft`)
+	run_test "5.14 difft --version" difft --version
 }
 
 # ── Suite: shell ─────────────────────────────────────────────────────────

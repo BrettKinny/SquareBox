@@ -112,6 +112,7 @@ What's included
 | [bat](https://github.com/sharkdp/bat) | Rust | Cat clone with syntax highlighting |
 | [curl](https://github.com/curl/curl) | C | URL data transfer |
 | [delta](https://github.com/dandavison/delta) | Rust | Syntax-highlighting pager for git diffs |
+| [difftastic](https://github.com/Wilfred/difftastic) | Rust | Syntax-aware structural diff tool (`difft`) |
 | [eza](https://github.com/eza-community/eza) | Rust | Modern ls replacement |
 | [fd](https://github.com/sharkdp/fd) | Rust | Fast, user-friendly find alternative |
 | [fzf](https://github.com/junegunn/fzf) | Go | Fuzzy finder |
@@ -119,6 +120,7 @@ What's included
 | [glow](https://github.com/charmbracelet/glow) | Go | Terminal markdown renderer |
 | [gum](https://github.com/charmbracelet/gum) | Go | Tool for shell scripts and dotfiles |
 | [jq](https://github.com/jqlang/jq) | C | JSON processor |
+| [just](https://github.com/casey/just) | Rust | Command runner / modern make alternative |
 | [nano](https://nano-editor.org) | C | Default text editor |
 | [ripgrep](https://github.com/BurntSushi/ripgrep) | Rust | Fast recursive grep |
 | [starship](https://github.com/starship/starship) | Rust | Cross-shell prompt |

@@ -4,8 +4,6 @@
 
 Items are listed in priority order.
 
-- **just** — add [just](https://github.com/casey/just) (modern task runner) to the default image; single binary, zero dependencies, gives users a standard way to define project commands
-- **difftastic** — add [difftastic](https://github.com/Wilfred/difftastic) (syntax-aware structural diffs) to the default image; complements delta with language-aware diffing
 - **direnv** — add [direnv](https://github.com/direnv/direnv) (automatic per-directory environment loading) to the default image; auto-loads `.envrc` files on `cd`, integrates with zoxide for seamless per-project environment variables
 - **Zsh option** — offer Zsh with Oh My Zsh, autosuggestions, and syntax highlighting as a selectable shell in `setup.sh` alongside the Bash default; closes the biggest UX gap vs. competing dev environments
 - **Dotfile portability** — let users mount or bootstrap their own dotfiles (starship.toml, tmux.conf, aliases, etc.) via a `~/.squarebox/` convention, with sensible merge/override behaviour against the defaults
@@ -19,4 +17,6 @@ Items are listed in priority order.
 - **Network firewall / sandboxing mode** — optional network-level isolation (iptables/seccomp) so AI agents can only reach approved endpoints, inspired by trailofbits and clampdown
 - **Multiple concurrent container instances** — support running more than one squarebox container simultaneously
 - **Multi-agent workflow orchestration** — explore adding a layer to run multiple AI coding agents simultaneously in isolated contexts (git worktrees + tmux sessions), inspired by agent-of-empires; may be better to integrate an existing tool than build from scratch
+- ~~**just**~~ — ✅ done: [just](https://github.com/casey/just) pinned in the Dockerfile tier with SHA256 checksums
+- ~~**difftastic**~~ — ✅ done: [difftastic](https://github.com/Wilfred/difftastic) (`difft`) pinned in the Dockerfile tier with SHA256 checksums
 - ~~**Podman compatibility**~~ — ✅ done: install scripts auto-detect Docker or Podman and skip UID chown logic for Podman's rootless user namespace mapping
