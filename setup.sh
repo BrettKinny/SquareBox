@@ -1,6 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ── Argument parsing ────────────────────────────────────────────────────
+# When called from sqrbx-setup wrapper: setup.sh --rerun [section ...]
+# When called from .bashrc first-run:   setup.sh (no args)
+
+SB_RERUN=false
+SB_SECTIONS=()
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		--rerun) SB_RERUN=true; shift ;;
+		*)       SB_SECTIONS+=("$1"); shift ;;
+	esac
+done
+
+# If --rerun with no specific sections, run all sections
+if $SB_RERUN && [ ${#SB_SECTIONS[@]} -eq 0 ]; then
+	SB_SECTIONS=(git github ai editors tuis multiplexers sdks)
+fi
+
+should_run() {
+	# In first-run mode (no --rerun), always run all sections
+	$SB_RERUN || return 0
+	local section="$1"
+	for s in "${SB_SECTIONS[@]}"; do
+		[ "$s" = "$section" ] && return 0
+	done
+	return 1
+}
+
 SB_TMPDIR=$(mktemp -d)
 export SB_TMPDIR
 trap 'rm -rf "$SB_TMPDIR"' EXIT
@@ -62,43 +91,85 @@ run_with_spinner() {
 	fi
 }
 
-if $HAS_GUM; then
-	gum style --border double --padding "0 2" --border-foreground 208 "🟧📦 squarebox setup"
+if $SB_RERUN; then
+	_sb_banner="🟧📦 squarebox setup (reconfigure)"
 else
-	echo "=== 🟧📦 squarebox setup ==="
+	_sb_banner="🟧📦 squarebox setup"
+fi
+if $HAS_GUM; then
+	gum style --border double --padding "0 2" --border-foreground 208 "$_sb_banner"
+else
+	echo "=== $_sb_banner ==="
 fi
 echo
 
 # Git identity
-if [ -z "$(git config --global user.name 2>/dev/null)" ]; then
-	if $INTERACTIVE; then
-		while true; do
-			if $HAS_GUM; then
-				name=$(gum input --placeholder "Your Name" --header "Git name:" --width 40) || true
-			else
-				read -rp "Git name: " name
-			fi
-			[ -n "$name" ] && break
-			echo "Name cannot be empty."
-		done
-		git config --file ~/.config/git/config user.name "$name"
-	else
-		echo "Skipping git identity setup (non-interactive)"
-	fi
-fi
+if should_run git; then
+	_current_name=$(git config --global user.name 2>/dev/null || true)
+	_current_email=$(git config --global user.email 2>/dev/null || true)
 
-if [ -z "$(git config --global user.email 2>/dev/null)" ]; then
-	if $INTERACTIVE; then
-		while true; do
+	if $SB_RERUN && [ -n "$_current_name" ] && $INTERACTIVE; then
+		echo "Current git name: $_current_name"
+		echo "Current git email: ${_current_email:-(not set)}"
+		if $HAS_GUM; then
+			gum confirm "Change git identity?" --default=false && _change_git=true || _change_git=false
+		else
+			read -rp "Change git identity? [y/N]: " _git_reply
+			case "${_git_reply:-N}" in
+				[Yy]*) _change_git=true ;;
+				*)     _change_git=false ;;
+			esac
+		fi
+		if $_change_git; then
 			if $HAS_GUM; then
-				email=$(gum input --placeholder "you@example.com" --header "Git email:" --width 40) || true
+				name=$(gum input --value "$_current_name" --header "Git name:" --width 40) || name="$_current_name"
 			else
-				read -rp "Git email: " email
+				read -rp "Git name [$_current_name]: " name
 			fi
-			[ -n "$email" ] && break
-			echo "Email cannot be empty."
-		done
-		git config --file ~/.config/git/config user.email "$email"
+			# Empty input (cleared gum value or blank read) keeps the current value
+			[ -z "$name" ] && name="$_current_name"
+			git config --file ~/.config/git/config user.name "$name"
+			if $HAS_GUM; then
+				email=$(gum input --value "$_current_email" --header "Git email:" --width 40) || email="$_current_email"
+			else
+				read -rp "Git email [$_current_email]: " email
+			fi
+			[ -z "$email" ] && email="$_current_email"
+			# Only write email if we have a non-empty value (preserves "unset" state)
+			[ -n "$email" ] && git config --file ~/.config/git/config user.email "$email"
+		fi
+	else
+		if [ -z "$_current_name" ]; then
+			if $INTERACTIVE; then
+				while true; do
+					if $HAS_GUM; then
+						name=$(gum input --placeholder "Your Name" --header "Git name:" --width 40) || true
+					else
+						read -rp "Git name: " name
+					fi
+					[ -n "$name" ] && break
+					echo "Name cannot be empty."
+				done
+				git config --file ~/.config/git/config user.name "$name"
+			else
+				echo "Skipping git identity setup (non-interactive)"
+			fi
+		fi
+
+		if [ -z "$_current_email" ]; then
+			if $INTERACTIVE; then
+				while true; do
+					if $HAS_GUM; then
+						email=$(gum input --placeholder "you@example.com" --header "Git email:" --width 40) || true
+					else
+						read -rp "Git email: " email
+					fi
+					[ -n "$email" ] && break
+					echo "Email cannot be empty."
+				done
+				git config --file ~/.config/git/config user.email "$email"
+			fi
+		fi
 	fi
 fi
 
@@ -111,46 +182,153 @@ if [ -d "$GH_PERSIST" ] && [ ! -d ~/.config/gh ]; then
 fi
 
 # GitHub CLI (optional — users who don't use GitHub can skip this)
-if gh auth status &>/dev/null; then
-	rm -f "$GH_SKIP_MARKER"
-	echo "GitHub CLI: already authenticated"
-elif [ -f "$GH_SKIP_MARKER" ]; then
-	echo "GitHub CLI: sign-in skipped (run 'gh auth login' to change)"
-elif $INTERACTIVE; then
-	echo
-	if $HAS_GUM; then
-		gum confirm "Sign in to GitHub?" --default=true && do_gh_login=true || do_gh_login=false
-	else
-		read -rp "Sign in to GitHub? [Y/n]: " gh_reply
-		case "${gh_reply:-Y}" in
-			[Nn]*) do_gh_login=false ;;
-			*)     do_gh_login=true ;;
-		esac
-	fi
-	mkdir -p /workspace/.squarebox
-	if $do_gh_login; then
-		echo "Logging into GitHub..."
-		# BROWSER=echo makes gh print the auth URL instead of trying to open a browser
-		BROWSER=echo gh auth login
-		# Persist gh config for future rebuilds (only if auth succeeded)
-		if gh auth status &>/dev/null; then
-			mkdir -p "$GH_PERSIST"
-			cp -r ~/.config/gh/. "$GH_PERSIST"/
-			rm -f "$GH_SKIP_MARKER"
+if should_run github; then
+	if gh auth status &>/dev/null; then
+		rm -f "$GH_SKIP_MARKER"
+		if $SB_RERUN && $INTERACTIVE; then
+			echo "GitHub CLI: already authenticated"
+			gh auth status 2>&1 | head -5 || true
+			if $HAS_GUM; then
+				gum confirm "Re-authenticate?" --default=false && _do_reauth=true || _do_reauth=false
+			else
+				read -rp "Re-authenticate? [y/N]: " _reauth_reply
+				case "${_reauth_reply:-N}" in
+					[Yy]*) _do_reauth=true ;;
+					*)     _do_reauth=false ;;
+				esac
+			fi
+			if $_do_reauth; then
+				BROWSER=echo gh auth login
+				if gh auth status &>/dev/null; then
+					mkdir -p "$GH_PERSIST"
+					cp -r ~/.config/gh/. "$GH_PERSIST"/
+				fi
+			fi
 		else
-			echo "GitHub CLI auth was not completed — skipping config persistence"
+			echo "GitHub CLI: already authenticated"
+		fi
+	elif [ -f "$GH_SKIP_MARKER" ]; then
+		if $SB_RERUN && $INTERACTIVE; then
+			echo "GitHub CLI: previously skipped"
+			if $HAS_GUM; then
+				gum confirm "Sign in to GitHub?" --default=true && do_gh_login=true || do_gh_login=false
+			else
+				read -rp "Sign in to GitHub? [Y/n]: " gh_reply
+				case "${gh_reply:-Y}" in
+					[Nn]*) do_gh_login=false ;;
+					*)     do_gh_login=true ;;
+				esac
+			fi
+			if $do_gh_login; then
+				echo "Logging into GitHub..."
+				BROWSER=echo gh auth login
+				if gh auth status &>/dev/null; then
+					mkdir -p "$GH_PERSIST"
+					cp -r ~/.config/gh/. "$GH_PERSIST"/
+					rm -f "$GH_SKIP_MARKER"
+				else
+					echo "GitHub CLI auth was not completed — skipping config persistence"
+				fi
+			fi
+		else
+			echo "GitHub CLI: sign-in skipped (run 'gh auth login' to change)"
+		fi
+	elif $INTERACTIVE; then
+		echo
+		if $HAS_GUM; then
+			gum confirm "Sign in to GitHub?" --default=true && do_gh_login=true || do_gh_login=false
+		else
+			read -rp "Sign in to GitHub? [Y/n]: " gh_reply
+			case "${gh_reply:-Y}" in
+				[Nn]*) do_gh_login=false ;;
+				*)     do_gh_login=true ;;
+			esac
+		fi
+		mkdir -p /workspace/.squarebox
+		if $do_gh_login; then
+			echo "Logging into GitHub..."
+			# BROWSER=echo makes gh print the auth URL instead of trying to open a browser
+			BROWSER=echo gh auth login
+			# Persist gh config for future rebuilds (only if auth succeeded)
+			if gh auth status &>/dev/null; then
+				mkdir -p "$GH_PERSIST"
+				cp -r ~/.config/gh/. "$GH_PERSIST"/
+				rm -f "$GH_SKIP_MARKER"
+			else
+				echo "GitHub CLI auth was not completed — skipping config persistence"
+			fi
+		else
+			touch "$GH_SKIP_MARKER"
+			echo "Skipping GitHub CLI sign-in (run 'gh auth login' later if you change your mind)"
 		fi
 	else
-		touch "$GH_SKIP_MARKER"
-		echo "Skipping GitHub CLI sign-in (run 'gh auth login' later if you change your mind)"
+		echo "Skipping GitHub CLI auth (non-interactive)"
 	fi
-else
-	echo "Skipping GitHub CLI auth (non-interactive)"
 fi
 
-# AI coding assistant
-AI_CONFIG="/workspace/.squarebox/ai-tool"
+# Shared infrastructure (needed by multiple sections)
 mkdir -p /workspace/.squarebox ~/.local/bin
+touch ~/.squarebox-sdk-paths
+
+# Optional tools install the latest upstream release at setup time.
+# Pinned versions live only in the Dockerfile tier (checksums.txt).
+
+_install_node_inner() {
+	rm -rf "$HOME/.nvm"
+	local nvm_tag
+	nvm_tag=$(sb_gh_latest_tag nvm-sh/nvm) || return 1
+	curl -fsSo "${SB_TMPDIR}/nvm-install.sh" "https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_tag}/install.sh"
+	bash "${SB_TMPDIR}/nvm-install.sh" >/dev/null 2>&1
+	export NVM_DIR="$HOME/.nvm"
+	# shellcheck source=/dev/null
+	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+	# Node.js binary verification is handled by nvm
+	nvm install --lts >/dev/null 2>&1
+	if ! grep -q 'NVM_DIR' ~/.squarebox-sdk-paths 2>/dev/null; then
+		cat <<'PATHS' >> ~/.squarebox-sdk-paths
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+PATHS
+	fi
+}
+
+install_node() {
+	if command -v node &>/dev/null; then echo "Node.js already installed, skipping."; return 0; fi
+	run_with_spinner "Installing Node.js (via nvm)..." _install_node_inner
+	# Source nvm in current shell (spinner runs in subshell)
+	export NVM_DIR="$HOME/.nvm"
+	# shellcheck source=/dev/null
+	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+	if ! command -v node &>/dev/null; then
+		echo "Error: Node.js binary not found after installation" >&2
+		return 1
+	fi
+}
+
+# Ensure Node.js is available for npm-based AI tools
+ensure_node_for_npm() {
+	if command -v node &>/dev/null; then return 0; fi
+	install_node
+	# Ensure node/npm are available in this session
+	export NVM_DIR="$HOME/.nvm"
+	# shellcheck source=/dev/null
+	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+	# Persist Node.js in SDK config so it survives rebuilds
+	local sdk_cfg="/workspace/.squarebox/sdks"
+	if [ -f "$sdk_cfg" ]; then
+		local sdk_current
+		sdk_current=$(cat "$sdk_cfg")
+		if [[ ",$sdk_current," != *",node,"* ]] && [ "$sdk_current" != "node" ]; then
+			echo "${sdk_current:+$sdk_current,}node" > "$sdk_cfg"
+		fi
+	else
+		echo "node" > "$sdk_cfg"
+	fi
+}
+
+# AI coding assistant
+if should_run ai; then
+AI_CONFIG="/workspace/.squarebox/ai-tool"
 
 ai_prev=""
 if [ -f "$AI_CONFIG" ]; then
@@ -227,65 +405,6 @@ else
 	echo "$ai_choice" > "$AI_CONFIG"
 fi
 
-# Optional tools install the latest upstream release at setup time.
-# Pinned versions live only in the Dockerfile tier (checksums.txt).
-
-# SDK path setup file (create if missing, preserve on retry)
-touch ~/.squarebox-sdk-paths
-
-_install_node_inner() {
-	rm -rf "$HOME/.nvm"
-	local nvm_tag
-	nvm_tag=$(sb_gh_latest_tag nvm-sh/nvm) || return 1
-	curl -fsSo "${SB_TMPDIR}/nvm-install.sh" "https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_tag}/install.sh"
-	bash "${SB_TMPDIR}/nvm-install.sh" >/dev/null 2>&1
-	export NVM_DIR="$HOME/.nvm"
-	# shellcheck source=/dev/null
-	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-	# Node.js binary verification is handled by nvm
-	nvm install --lts >/dev/null 2>&1
-	if ! grep -q 'NVM_DIR' ~/.squarebox-sdk-paths 2>/dev/null; then
-		cat <<'PATHS' >> ~/.squarebox-sdk-paths
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-PATHS
-	fi
-}
-
-install_node() {
-	if command -v node &>/dev/null; then echo "Node.js already installed, skipping."; return 0; fi
-	run_with_spinner "Installing Node.js (via nvm)..." _install_node_inner
-	# Source nvm in current shell (spinner runs in subshell)
-	export NVM_DIR="$HOME/.nvm"
-	# shellcheck source=/dev/null
-	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-	if ! command -v node &>/dev/null; then
-		echo "Error: Node.js binary not found after installation" >&2
-		return 1
-	fi
-}
-
-# Ensure Node.js is available for npm-based AI tools
-ensure_node_for_npm() {
-	if command -v node &>/dev/null; then return 0; fi
-	install_node
-	# Ensure node/npm are available in this session
-	export NVM_DIR="$HOME/.nvm"
-	# shellcheck source=/dev/null
-	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-	# Persist Node.js in SDK config so it survives rebuilds
-	local sdk_cfg="/workspace/.squarebox/sdks"
-	if [ -f "$sdk_cfg" ]; then
-		local sdk_current
-		sdk_current=$(cat "$sdk_cfg")
-		if [[ ",$sdk_current," != *",node,"* ]] && [ "$sdk_current" != "node" ]; then
-			echo "${sdk_current:+$sdk_current,}node" > "$sdk_cfg"
-		fi
-	else
-		echo "node" > "$sdk_cfg"
-	fi
-}
-
 install_copilot() {
 	if command -v github-copilot-cli &>/dev/null; then echo "GitHub Copilot CLI already installed, skipping."; return 0; fi
 	ensure_node_for_npm
@@ -346,8 +465,10 @@ done
 		esac
 	fi
 } > ~/.squarebox-ai-aliases
+fi # should_run ai
 
 # Text editors
+if should_run editors; then
 EDITOR_CONFIG="/workspace/.squarebox/editors"
 
 editor_prev=""
@@ -484,8 +605,10 @@ fi
 		echo "export EDITOR='$editor_cmd'"
 	fi
 } > ~/.squarebox-editor-aliases
+fi # should_run editors
 
 # TUI tools
+if should_run tuis; then
 TUI_CONFIG="/workspace/.squarebox/tuis"
 
 tui_prev=""
@@ -590,8 +713,10 @@ done
 		esac
 	done
 } > ~/.squarebox-tui-aliases
+fi # should_run tuis
 
 # Terminal multiplexer
+if should_run multiplexers; then
 MUX_CONFIG="/workspace/.squarebox/multiplexer"
 
 mux_prev=""
@@ -1004,8 +1129,10 @@ for mux in $(echo "$mux_list" | tr ',' ' '); do
 		zellij) install_zellij || echo "Warning: Zellij installation failed." ;;
 	esac
 done
+fi # should_run multiplexers
 
 # SDKs
+if should_run sdks; then
 SDK_CONFIG="/workspace/.squarebox/sdks"
 
 sdk_prev=""
@@ -1083,7 +1210,7 @@ else
 	echo "$sdk_list" > "$SDK_CONFIG"
 fi
 
-# install_node is defined earlier (needed by npm-based AI tools)
+# install_node is defined earlier (shared by AI tools and SDKs sections)
 
 _install_python_inner() {
 	# Trust boundary: the uv install script manages its own binary fetching
@@ -1164,6 +1291,7 @@ for sdk in $(echo "$sdk_list" | tr ',' ' '); do
 		dotnet) install_dotnet || echo "Warning: .NET installation failed." ;;
 	esac
 done
+fi # should_run sdks
 
 echo
 

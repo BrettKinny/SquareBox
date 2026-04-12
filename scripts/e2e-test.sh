@@ -277,11 +277,41 @@ suite_devcontainer() {
 	run_test_grep "8.5 DEVCONTAINER env var set" "1" jq -r '.containerEnv.DEVCONTAINER' "$dc"
 }
 
+# ── Suite: setup-rerun ───────────────────────────────────────────────────
+# Covers: sqrbx-setup command (re-run container setup)
+
+suite_setup_rerun() {
+	# sqrbx-setup exists and is executable
+	run_test "9.1 sqrbx-setup exists" test -x /usr/local/bin/sqrbx-setup
+
+	# --help shows usage
+	run_test_grep "9.2 sqrbx-setup --help shows usage" "usage" sqrbx-setup --help
+
+	# --help lists section names
+	run_test_grep "9.3 sqrbx-setup --help lists sections" "editors" sqrbx-setup --help
+
+	# --list runs without error
+	run_test "9.4 sqrbx-setup --list runs" sqrbx-setup --list
+
+	# Invalid section name exits with error
+	TEST_NUM=$((TEST_NUM + 1))
+	if sqrbx-setup invalidname 2>/dev/null; then
+		FAIL_COUNT=$((FAIL_COUNT + 1))
+		echo "not ok ${TEST_NUM} - 9.5 sqrbx-setup rejects invalid section"
+	else
+		PASS_COUNT=$((PASS_COUNT + 1))
+		echo "ok ${TEST_NUM} - 9.5 sqrbx-setup rejects invalid section"
+	fi
+
+	# setup.sh accepts --rerun with a valid section without error (non-interactive)
+	run_test "9.6 setup.sh --rerun parses cleanly" bash -c '~/setup.sh --rerun git </dev/null'
+}
+
 # ── Main ─────────────────────────────────────────────────────────────────
 
 usage() {
 	echo "Usage: $0 <suite|all>"
-	echo "Suites: tools, shell, setup, setup-editors, update, devcontainer"
+	echo "Suites: tools, shell, setup, setup-editors, update, devcontainer, setup-rerun"
 	exit 1
 }
 
@@ -298,12 +328,14 @@ main() {
 		setup-editors)   suite_setup_editors ;;
 		update)          suite_update ;;
 		devcontainer)    suite_devcontainer ;;
+		setup-rerun)     suite_setup_rerun ;;
 		all)
 			suite_tools
 			suite_shell
 			suite_setup
 			suite_update
 			suite_devcontainer
+			suite_setup_rerun
 			;;
 		*) usage ;;
 	esac

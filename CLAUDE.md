@@ -51,6 +51,21 @@ The `install.sh` script automates initial setup (clone, build, create container,
 
 Selections are saved to `/workspace/.squarebox/` and reused on subsequent rebuilds.
 
+### Re-running Setup
+
+`sqrbx-setup` re-runs the setup wizard inside a running container to add or change tool selections:
+
+```bash
+sqrbx-setup                  # Re-run all sections
+sqrbx-setup ai editors       # Re-run specific sections only
+sqrbx-setup --list            # Show current tool selections
+sqrbx-setup --help            # Show usage
+```
+
+Valid sections: `git`, `github`, `ai`, `editors`, `tuis`, `multiplexers`, `sdks`.
+
+Run `source ~/.bashrc` after setup to pick up new aliases and PATH changes in the current shell.
+
 ## Updating Tool Versions
 
 ```bash
