@@ -5,7 +5,6 @@
 Items are listed in priority order.
 
 - **just** — add [just](https://github.com/casey/just) (modern task runner) to the default image; single binary, zero dependencies, gives users a standard way to define project commands
-- **lazydocker** — add [lazydocker](https://github.com/jesseduffield/lazydocker) (Docker management TUI) to the default image; same author as lazygit, completes the TUI tool suite for developers managing containers
 - **difftastic** — add [difftastic](https://github.com/Wilfred/difftastic) (syntax-aware structural diffs) to the default image; complements delta with language-aware diffing
 - **btop** — add [btop](https://github.com/aristocratos/btop) (system resource monitor TUI) to the default image; fills the "what's eating my CPU/memory" gap without requiring manual package installation
 - **direnv** — add [direnv](https://github.com/direnv/direnv) (automatic per-directory environment loading) to the default image; auto-loads `.envrc` files on `cd`, integrates with zoxide for seamless per-project environment variables
