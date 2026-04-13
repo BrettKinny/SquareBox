@@ -5,7 +5,6 @@
 Items are listed in priority order.
 
 - **direnv** — add [direnv](https://github.com/direnv/direnv) (automatic per-directory environment loading) to the default image; auto-loads `.envrc` files on `cd`, integrates with zoxide for seamless per-project environment variables
-- **Zsh option** — offer Zsh with Oh My Zsh, autosuggestions, and syntax highlighting as a selectable shell in `setup.sh` alongside the Bash default; closes the biggest UX gap vs. competing dev environments
 - **Dotfile portability** — let users mount or bootstrap their own dotfiles (starship.toml, tmux.conf, aliases, etc.) via a `~/.squarebox/` convention, with sensible merge/override behaviour against the defaults
 - **MCP server pre-configuration** — ship ready-made MCP server configs (filesystem, GitHub, etc.) as part of the AI assistant setup step
 - **hyperfine** — add [hyperfine](https://github.com/sharkdp/hyperfine) (command-line benchmarking) to the default image
@@ -20,3 +19,4 @@ Items are listed in priority order.
 - ~~**just**~~ — ✅ done: [just](https://github.com/casey/just) pinned in the Dockerfile tier with SHA256 checksums
 - ~~**difftastic**~~ — ✅ done: [difftastic](https://github.com/Wilfred/difftastic) (`difft`) pinned in the Dockerfile tier with SHA256 checksums
 - ~~**Podman compatibility**~~ — ✅ done: install scripts auto-detect Docker or Podman and skip UID chown logic for Podman's rootless user namespace mapping
+- ~~**Zsh option**~~ — ✅ done (experimental): `setup.sh` now offers Zsh with Oh My Zsh, autosuggestions, and syntax highlighting as a selectable shell alongside the Bash default; opt in via the new `shell` setup section
