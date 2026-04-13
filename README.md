@@ -1,15 +1,15 @@
 # 🟧📦 squarebox
 
-**A curated set of modern CLI/TUI tools and AI coding assistants in a Docker container. Batteries included.**
+**A curated set of modern CLI/TUI tools and AI coding assistants in a container. Batteries included.**
 
 *For developers who live in the terminal but need to work across
 multiple platforms and devices.*
 
 **squarebox** packages a complete terminal-based development environment
-into a single Docker container: modern CLI tools, AI coding assistants,
-language SDKs, and an opinionated set of shell aliases. Run the same box
-anywhere (desktop, VPS, or Codespace) and SSH in from your laptop, tablet,
-or phone (please don't).
+into a single container (Docker or Podman): modern CLI tools, AI coding
+assistants, language SDKs, and an opinionated set of shell aliases. Run the
+same box anywhere (desktop, VPS, or Codespace) and SSH in from your laptop,
+tablet, or phone (please don't).
 
 The goal is to make modern terminal tooling easy and accessible. One-line
 install, interactive first-run setup, sensible defaults (thanks [omarchy](https://omarchy.org)).
@@ -20,10 +20,14 @@ install, interactive first-run setup, sensible defaults (thanks [omarchy](https:
 Prerequisites
 -------------
 
-- [Docker](https://docs.docker.com/get-docker/) (see one-line install below if you don't have it)
+- [Docker](https://docs.docker.com/get-docker/) or [Podman](https://podman.io/getting-started/installation) (see one-line install below if you don't have either)
 - [Git](https://git-scm.com/) - on Windows, install [Git for Windows](https://gitforwindows.org/)
 
-### Don't have Docker? One-line install
+The installer auto-detects which runtime is available. If both are installed, it
+asks which to use. Override with `SQUAREBOX_RUNTIME=docker` or
+`SQUAREBOX_RUNTIME=podman`.
+
+### Don't have Docker or Podman? One-line install
 
 **macOS** (via [Homebrew](https://brew.sh)):
 
@@ -45,7 +49,7 @@ running before you continue.
 Install
 -------
 
-These commands clone the repo, build the Docker image, and drop you into the
+These commands clone the repo, build the container image, and drop you into the
 container (if possible). On first login, a setup script runs automatically to
 configure git (pulling your name and email from the host's global git config
 if available), optionally sign in to GitHub CLI, your choice of AI coding
@@ -88,8 +92,9 @@ Start
 
     squarebox        # or: sqrbx
 
-These are shell aliases for `docker start -ai squarebox`, added automatically
-for Bash, Zsh, and PowerShell 7+.
+These are shell functions wrapping `docker start -ai squarebox` (or
+`podman start -ai squarebox`), added automatically for Bash, Zsh, and
+PowerShell 7+.
 
 The container is persistent: it suspends on exit and resumes on start, keeping
 installed packages, config, and shell history intact between sessions. Your
@@ -170,6 +175,28 @@ Installed during first-run setup. Choose either, both, or neither:
 |------|-------------|
 | [tmux](https://github.com/tmux/tmux) | Classic terminal multiplexer |
 | [zellij](https://github.com/zellij-org/zellij) | Friendly terminal workspace |
+
+### Shell (Experimental)
+
+By default, squarebox uses Bash. During first-run setup you can opt in to
+**Zsh** instead, which installs:
+
+| Name | Description |
+|------|-------------|
+| [zsh](https://www.zsh.org) | Z shell (via apt) |
+| [Oh My Zsh](https://ohmyz.sh) | Community framework for managing zsh config |
+| [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | Fish-like history-based suggestions |
+| [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) | Inline command syntax highlighting |
+
+The generated `~/.zshrc` mirrors the default bashrc — same aliases, starship
+prompt, zoxide, and AI/editor/SDK sourcing — layered on top of Oh My Zsh.
+
+> **Experimental:** the marker file `~/.squarebox-use-zsh` causes `~/.bashrc`
+> to `exec zsh -l` on every interactive login, so the next shell start picks
+> up the new shell. Set `SQUAREBOX_NO_ZSH=1` to force bash for a single
+> session, or re-run `sqrbx-setup shell` to switch back permanently. Tooling
+> is primarily tested against bash, so a few edge cases (custom alias files,
+> rebuilds) may need polish — please file an issue if you hit one.
 
 ### SDKs
 

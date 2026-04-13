@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-squarebox is a containerized development environment (Docker) combining modern CLI/TUI tools with Claude Code. It uses a persistent container model — the container suspends on exit and resumes on restart, preserving state. Workspace code lives on the host at `~/squarebox/workspace` via volume mount.
+squarebox is a containerized development environment (Docker or Podman) combining modern CLI/TUI tools with Claude Code. It uses a persistent container model — the container suspends on exit and resumes on restart, preserving state. Workspace code lives on the host at `~/squarebox/workspace` via volume mount.
 
 ## Build & Run
 
 ```bash
-# Build the Docker image
+# Build the image (docker or podman — both work)
 docker build -t squarebox .
 
 # Create and run a new container (SSH agent forwarding, capability-restricted)
@@ -31,6 +31,8 @@ docker run -it --name squarebox \
 docker start -ai squarebox
 ```
 
+Replace `docker` with `podman` above if using Podman. The `install.sh` script auto-detects the runtime; override with `SQUAREBOX_RUNTIME=docker|podman`.
+
 The `install.sh` script automates initial setup (clone, build, create container, add `sqrbx` shell alias). A `.devcontainer/devcontainer.json` is also provided for VS Code Dev Containers / Codespaces.
 
 **Windows PowerShell**: Only PowerShell 7+ (`pwsh`) is supported. Windows PowerShell 5.1 is not supported. `install.ps1` is the recommended Windows entry point — it handles clone, build, container creation, and PowerShell profile setup natively without requiring Git Bash. Running `install.sh` directly from Git Bash still works but only sets up bash aliases; it prints instructions to run `install.ps1` for PowerShell.
@@ -46,8 +48,24 @@ The `install.sh` script automates initial setup (clone, build, create container,
 5. **TUI tools** — lazygit, gh-dash, yazi (any combination)
 6. **Terminal multiplexers** — tmux, zellij
 7. **SDKs** — Node.js (via nvm), Python (via uv), Go, .NET
+8. **Shell** — bash (default) or zsh + Oh My Zsh + autosuggestions + syntax highlighting (experimental)
 
 Selections are saved to `/workspace/.squarebox/` and reused on subsequent rebuilds.
+
+### Re-running Setup
+
+`sqrbx-setup` re-runs the setup wizard inside a running container to add or change tool selections:
+
+```bash
+sqrbx-setup                  # Re-run all sections
+sqrbx-setup ai editors       # Re-run specific sections only
+sqrbx-setup --list            # Show current tool selections
+sqrbx-setup --help            # Show usage
+```
+
+Valid sections: `git`, `github`, `ai`, `editors`, `tuis`, `multiplexers`, `sdks`, `shell`.
+
+Run `source ~/.bashrc` after setup to pick up new aliases and PATH changes in the current shell.
 
 ## Updating Tool Versions
 

@@ -112,9 +112,10 @@ COPY --chown=dev:dev setup.sh /home/dev/setup.sh
 COPY --chown=dev:dev starship.toml /home/dev/.config/starship.toml
 
 COPY scripts/squarebox-update.sh /usr/local/bin/sqrbx-update
+COPY scripts/squarebox-setup.sh /usr/local/bin/sqrbx-setup
 COPY scripts/lib/tools.yaml /usr/local/lib/squarebox/tools.yaml
 COPY scripts/lib/tool-lib.sh /usr/local/lib/squarebox/tool-lib.sh
-RUN chmod +x /usr/local/bin/sqrbx-update
+RUN chmod +x /home/dev/setup.sh /usr/local/bin/sqrbx-update /usr/local/bin/sqrbx-setup
 
 RUN chown -R dev:dev /home/dev/.config /home/dev/.claude \
 	&& mkdir -p /workspace && chown dev:dev /workspace
@@ -161,6 +162,13 @@ if [ ! -f ~/.squarebox-setup-done ]; then
 		[ -f ~/.squarebox-tui-aliases ] && source ~/.squarebox-tui-aliases
 		[ -f ~/.squarebox-sdk-paths ] && source ~/.squarebox-sdk-paths
 	fi
+fi
+# Hand off to zsh if the user opted in via setup.sh (experimental).
+# SQUAREBOX_IN_ZSH guards against re-exec loops; SQUAREBOX_NO_ZSH lets
+# users force bash for one shell without removing the marker.
+if [ -f ~/.squarebox-use-zsh ] && [ -z "${SQUAREBOX_IN_ZSH:-}" ] && [ -z "${SQUAREBOX_NO_ZSH:-}" ] && command -v zsh >/dev/null 2>&1; then
+	export SQUAREBOX_IN_ZSH=1
+	exec zsh -l
 fi
 EOFRC
 
