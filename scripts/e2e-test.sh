@@ -166,6 +166,13 @@ suite_setup_editors() {
 	echo "lazygit,gh-dash,yazi" > /workspace/.squarebox/tuis
 	echo "tmux,zellij" > /workspace/.squarebox/multiplexer
 	echo "node,go" > /workspace/.squarebox/sdks
+	# Shell section (experimental): exercise the bash path here. The zsh
+	# install (apt zsh + Oh My Zsh + two plugin clones) is network-heavy and
+	# would significantly slow the CI suite, so it's not pre-seeded by default.
+	echo "bash" > /workspace/.squarebox/shell
+	# Ensure a stale marker from a previous run is cleared so the assertion
+	# below reflects the current selection, not leftover state.
+	rm -f ~/.squarebox-use-zsh
 
 	# Pre-configure git identity
 	git config --global user.name "E2E Test" 2>/dev/null || true
@@ -208,6 +215,18 @@ suite_setup_editors() {
 	run_test "3.11c tuis config saved" test -f /workspace/.squarebox/tuis
 	run_test "3.11d multiplexer config saved" test -f /workspace/.squarebox/multiplexer
 	run_test "3.11e sdks config saved" test -f /workspace/.squarebox/sdks
+	run_test "3.11f shell config saved" test -f /workspace/.squarebox/shell
+
+	# 3.12 shell section: bash selection leaves no zsh handoff marker
+	run_test_grep "3.12a shell config is bash" "bash" cat /workspace/.squarebox/shell
+	TEST_NUM=$((TEST_NUM + 1))
+	if [ ! -e ~/.squarebox-use-zsh ]; then
+		PASS_COUNT=$((PASS_COUNT + 1))
+		echo "ok ${TEST_NUM} - 3.12b no zsh marker for bash selection"
+	else
+		FAIL_COUNT=$((FAIL_COUNT + 1))
+		echo "not ok ${TEST_NUM} - 3.12b no zsh marker for bash selection"
+	fi
 
 	# 4.4 EDITOR set to first selected editor (micro)
 	run_test_grep "4.4 EDITOR set to micro" "micro" cat ~/.squarebox-editor-aliases
@@ -289,6 +308,7 @@ suite_setup_rerun() {
 
 	# --help lists section names
 	run_test_grep "9.3 sqrbx-setup --help lists sections" "editors" sqrbx-setup --help
+	run_test_grep "9.3b sqrbx-setup --help lists shell section" "shell" sqrbx-setup --help
 
 	# --list runs without error
 	run_test "9.4 sqrbx-setup --list runs" sqrbx-setup --list
