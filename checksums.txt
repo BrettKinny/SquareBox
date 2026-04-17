@@ -5,21 +5,21 @@
 # Delta 0.19.2
 ea4f0222950ee750a3d38dd80d03bce4cee07a3f63928fc47548383bcaf23093  git-delta_0.19.2_amd64.deb
 0edc36cf514f1bd84becac3e94ee8ae9f8818c6a1f99f7b2ee67b362afa253d3  git-delta_0.19.2_arm64.deb
-# Yq 4.52.5
-75d893a0d5940d1019cb7cdc60001d9e876623852c31cfc6267047bc31149fa9  yq_linux_amd64
-90fa510c50ee8ca75544dbfffed10c88ed59b36834df35916520cddc623d9aaa  yq_linux_arm64
-# xh 0.25.3
+# Yq 4.53.2
+d56bf5c6819e8e696340c312bd70f849dc1678a7cda9c2ad63eebd906371d56b  yq_linux_amd64
+03061b2a50c7a498de2bbb92d7cb078ce433011f085a4994117c2726be4106ea  yq_linux_arm64
+# Xh 0.25.3
 fc738e616b327e7a10256e206c78073bfeed95d73af6ba9ced4c5eb20ac8d717  xh-v0.25.3-x86_64-unknown-linux-musl.tar.gz
 042f504048281e0042d99230750ee0a314d0a7273c4398d62a66896478b53a86  xh-v0.25.3-aarch64-unknown-linux-musl.tar.gz
-# Starship 1.24.2
-00ff3c1f8ffb59b5c15d4b44c076bcca04d92cf0055c86b916248c14f3ae714a  starship-x86_64-unknown-linux-musl.tar.gz
-56b9ff412bbf374d29b99e5ac09a849124cb37a0a13121e8470df32de53c1ea6  starship-aarch64-unknown-linux-musl.tar.gz
-# Glow 2.1.1
-59106b08be69b2a0bda1178327bbb7accd584e7c113ba3d2f5ef6e48ff3ac27f  glow_2.1.1_Linux_x86_64.tar.gz
-ab12a703cc6efd06caf24860344a2e8bc2518055fdd986f98eb761c47917ef3d  glow_2.1.1_Linux_arm64.tar.gz
+# Glow 2.1.2
+6063d4f2af8a82a5f4bba0831e165de9381660aa8b41df4816d0106a265b07d5  glow_2.1.2_Linux_x86_64.tar.gz
+cf63abebcb50b72909db965d78290e7cecbf17a900e84705dc84addbb6952099  glow_2.1.2_Linux_arm64.tar.gz
 # Gum 0.17.0
 69ee169bd6387331928864e94d47ed01ef649fbfe875baed1bbf27b5377a6fdb  gum_0.17.0_Linux_x86_64.tar.gz
 b0b9ed95cbf7c8b7073f17b9591811f5c001e33c7cfd066ca83ce8a07c576f9c  gum_0.17.0_Linux_arm64.tar.gz
+# Starship 1.24.2
+00ff3c1f8ffb59b5c15d4b44c076bcca04d92cf0055c86b916248c14f3ae714a  starship-x86_64-unknown-linux-musl.tar.gz
+56b9ff412bbf374d29b99e5ac09a849124cb37a0a13121e8470df32de53c1ea6  starship-aarch64-unknown-linux-musl.tar.gz
 # Just 1.49.0
 05eb2f068b641b06e5b318796c2e27d4dcca608e65b34329a08c1b9f582611bd  just-1.49.0-x86_64-unknown-linux-musl.tar.gz
 993b78f51004248114af22368f69715541542b3c9941c80e02f8ae10eb404ae0  just-1.49.0-aarch64-unknown-linux-musl.tar.gz
