@@ -170,6 +170,13 @@ if [ -f ~/.squarebox-use-zsh ] && [ -z "${SQUAREBOX_IN_ZSH:-}" ] && [ -z "${SQUA
 	export SQUAREBOX_IN_ZSH=1
 	exec zsh -l
 fi
+# Hand off to fish if the user opted in via setup.sh (experimental).
+# SQUAREBOX_IN_FISH guards against re-exec loops; SQUAREBOX_NO_FISH lets
+# users force bash for one shell without removing the marker.
+if [ -f ~/.squarebox-use-fish ] && [ -z "${SQUAREBOX_IN_FISH:-}" ] && [ -z "${SQUAREBOX_NO_FISH:-}" ] && command -v fish >/dev/null 2>&1; then
+	export SQUAREBOX_IN_FISH=1
+	exec fish -l
+fi
 EOFRC
 
 # Display MOTD on interactive shell login

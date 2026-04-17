@@ -36,7 +36,7 @@ usage() {
 	  tuis           TUI tools (lazygit, gh-dash, yazi)
 	  multiplexers   Terminal multiplexers (tmux, zellij)
 	  sdks           SDKs (node, python, go, dotnet, rust)
-	  shell          Default shell (bash, zsh — experimental)
+	  shell          Default shell (bash, zsh/fish — experimental)
 
 	${BOLD}Examples:${RESET}
 	  sqrbx-setup ai editors       Re-run AI assistant and editor selection

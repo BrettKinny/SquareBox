@@ -170,9 +170,9 @@ suite_setup_editors() {
 	# install (apt zsh + Oh My Zsh + two plugin clones) is network-heavy and
 	# would significantly slow the CI suite, so it's not pre-seeded by default.
 	echo "bash" > /workspace/.squarebox/shell
-	# Ensure a stale marker from a previous run is cleared so the assertion
+	# Ensure stale markers from a previous run are cleared so the assertion
 	# below reflects the current selection, not leftover state.
-	rm -f ~/.squarebox-use-zsh
+	rm -f ~/.squarebox-use-zsh ~/.squarebox-use-fish
 
 	# Pre-configure git identity
 	git config --global user.name "E2E Test" 2>/dev/null || true
@@ -217,7 +217,7 @@ suite_setup_editors() {
 	run_test "3.11e sdks config saved" test -f /workspace/.squarebox/sdks
 	run_test "3.11f shell config saved" test -f /workspace/.squarebox/shell
 
-	# 3.12 shell section: bash selection leaves no zsh handoff marker
+	# 3.12 shell section: bash selection leaves no zsh/fish handoff markers
 	run_test_grep "3.12a shell config is bash" "bash" cat /workspace/.squarebox/shell
 	TEST_NUM=$((TEST_NUM + 1))
 	if [ ! -e ~/.squarebox-use-zsh ]; then
@@ -226,6 +226,14 @@ suite_setup_editors() {
 	else
 		FAIL_COUNT=$((FAIL_COUNT + 1))
 		echo "not ok ${TEST_NUM} - 3.12b no zsh marker for bash selection"
+	fi
+	TEST_NUM=$((TEST_NUM + 1))
+	if [ ! -e ~/.squarebox-use-fish ]; then
+		PASS_COUNT=$((PASS_COUNT + 1))
+		echo "ok ${TEST_NUM} - 3.12c no fish marker for bash selection"
+	else
+		FAIL_COUNT=$((FAIL_COUNT + 1))
+		echo "not ok ${TEST_NUM} - 3.12c no fish marker for bash selection"
 	fi
 
 	# 4.4 EDITOR set to first selected editor (micro)
