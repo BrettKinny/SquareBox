@@ -1293,7 +1293,7 @@ for sdk in $(echo "$sdk_list" | tr ',' ' '); do
 done
 fi # should_run sdks
 
-# Shell (experimental) — offer Zsh + Oh My Zsh as an alternative to Bash
+# Shell (experimental) — offer Zsh + Oh My Zsh or Fish as alternatives to Bash
 if should_run shell; then
 SHELL_CONFIG="/workspace/.squarebox/shell"
 
@@ -1304,24 +1304,29 @@ fi
 
 if $INTERACTIVE; then
 	echo
-	section_header "Shell (experimental)"
+	section_header "Shell"
 	if $HAS_GUM; then
 		gum_selected=""
 		case "$shell_prev" in
-			zsh) gum_selected="zsh (experimental)" ;;
+			zsh)  gum_selected="zsh (experimental)" ;;
+			fish) gum_selected="fish (experimental)" ;;
 			bash) gum_selected="bash" ;;
 		esac
 		gum_args=(--header "Select default shell:")
 		[ -n "$gum_selected" ] && gum_args+=(--selected "$gum_selected")
-		shell_pick=$(gum choose "${gum_args[@]}" "bash" "zsh (experimental)") || shell_pick=""
+		shell_pick=$(gum choose "${gum_args[@]}" "bash" "zsh (experimental)" "fish (experimental)") || shell_pick=""
 		case "$shell_pick" in
-			"zsh (experimental)") shell_choice="zsh" ;;
-			"bash")               shell_choice="bash" ;;
-			*)                    shell_choice="$shell_prev" ;;
+			"zsh (experimental)")  shell_choice="zsh" ;;
+			"fish (experimental)") shell_choice="fish" ;;
+			"bash")                shell_choice="bash" ;;
+			*)                     shell_choice="$shell_prev" ;;
 		esac
 	else
 		echo "Select default shell:"
-		for sh_item in "1:bash:GNU Bash (default)" "2:zsh:Zsh + Oh My Zsh + autosuggestions + syntax highlighting (experimental)"; do
+		for sh_item in \
+			"1:bash:GNU Bash (default)" \
+			"2:zsh:Zsh + Oh My Zsh + autosuggestions + syntax highlighting (experimental)" \
+			"3:fish:Fish shell with built-in autosuggestions and syntax highlighting (experimental)"; do
 			num="${sh_item%%:*}"; rest="${sh_item#*:}"; key="${rest%%:*}"; desc="${rest#*:}"
 			if [ "$key" = "$shell_prev" ]; then
 				echo "  ${num}) ${key} — ${desc} [current]"
@@ -1329,13 +1334,14 @@ if $INTERACTIVE; then
 				echo "  ${num}) ${key} — ${desc}"
 			fi
 		done
-		read -rp "Selection [1,2/skip]: " shell_selection
+		read -rp "Selection [1,2,3/skip]: " shell_selection
 		if [ -z "$shell_selection" ] && [ -n "$shell_prev" ]; then
 			shell_choice="$shell_prev"
 		else
 			case "$shell_selection" in
 				1) shell_choice="bash" ;;
 				2) shell_choice="zsh" ;;
+				3) shell_choice="fish" ;;
 				*) shell_choice="${shell_prev:-bash}" ;;
 			esac
 		fi
@@ -1344,7 +1350,10 @@ if $INTERACTIVE; then
 	echo "$shell_choice" > "$SHELL_CONFIG"
 elif [ -n "$shell_prev" ]; then
 	shell_choice="$shell_prev"
-	[ "$shell_choice" = "zsh" ] && echo "Configuring shell: zsh (from previous selection)"
+	case "$shell_choice" in
+		zsh)  echo "Configuring shell: zsh (from previous selection)" ;;
+		fish) echo "Configuring shell: fish (from previous selection)" ;;
+	esac
 else
 	shell_choice="bash"
 	echo "$shell_choice" > "$SHELL_CONFIG"
@@ -1423,18 +1432,123 @@ install_zsh() {
 	run_with_spinner "Installing Zsh + Oh My Zsh..." _install_zsh_inner
 }
 
+# Translate one bash-syntax line from a ~/.squarebox-* alias/path file into
+# its fish equivalent on stdout. Handles:
+#   export PATH="A:B:$PATH"          → set -x PATH A B $PATH
+#   export NAME='value'              → set -x NAME value
+#   alias name='cmd'                 → passed through (fish accepts this form)
+# Bash-only constructs (nvm sourcing, [ -s ... ] && . ..., etc.) are dropped;
+# users who need nvm in fish should install a fish plugin (e.g. nvm.fish).
+_squarebox_bash_line_to_fish() {
+	local line="$1"
+	case "$line" in
+		"export PATH="*)
+			local val="${line#export PATH=}"
+			val="${val#\"}"; val="${val%\"}"
+			val="${val#\'}"; val="${val%\'}"
+			echo "set -x PATH ${val//:/ }"
+			;;
+		"export "*=*)
+			local rest="${line#export }"
+			local name="${rest%%=*}"
+			local val="${rest#*=}"
+			val="${val#\"}"; val="${val%\"}"
+			val="${val#\'}"; val="${val%\'}"
+			echo "set -x $name $val"
+			;;
+		"alias "*=*)
+			echo "$line"
+			;;
+	esac
+}
+
+_install_fish_inner() {
+	sudo apt-get update -qq && sudo apt-get install -y -qq fish >/dev/null 2>&1 || return 1
+	command -v fish >/dev/null 2>&1 || return 1
+	mkdir -p "$HOME/.config/fish/conf.d" || return 1
+	# Generate ~/.config/fish/config.fish mirroring the default bashrc in
+	# fish-native syntax. Fish has built-in autosuggestions and syntax
+	# highlighting, so no plugins are needed.
+	cat > "$HOME/.config/fish/config.fish" <<-'FISHRC' || return 1
+		# squarebox fish config (experimental) — mirrors ~/.bashrc
+		status is-interactive; or exit 0
+
+		starship init fish | source
+		zoxide init fish --cmd cd | source
+
+		alias ls='eza --icons'
+		alias ll='eza -la --icons'
+		alias lsa='ls -a'
+		alias lt='eza --tree --level=2 --long --icons --git'
+		alias lta='lt -a'
+		alias cat='bat --paging=never'
+		alias ff="fzf --preview 'bat --style=numbers --color=always {}'"
+		alias eff='$EDITOR (ff)'
+		alias ..='cd ..'
+		alias ...='cd ../..'
+		alias ....='cd ../../..'
+		alias g='git'
+		alias gcm='git commit -m'
+		alias gcam='git commit -a -m'
+		alias gcad='git commit -a --amend'
+
+		set -x EDITOR nano
+		fish_add_path -g $HOME/.local/bin
+
+		# User selections translated from bash files at install time.
+		test -f $HOME/.config/fish/conf.d/squarebox-selections.fish
+			and source $HOME/.config/fish/conf.d/squarebox-selections.fish
+
+		test -x ~/motd.sh; and ~/motd.sh
+	FISHRC
+	[ -f "$HOME/.config/fish/config.fish" ] || return 1
+
+	# Translate AI/editor/TUI/SDK bash-syntax files into a single fish
+	# conf.d snippet. Regenerated each install to reflect current selections.
+	local sel_out="$HOME/.config/fish/conf.d/squarebox-selections.fish"
+	{
+		echo "# Generated by setup.sh from ~/.squarebox-* bash files."
+		for src in \
+			"$HOME/.squarebox-ai-aliases" \
+			"$HOME/.squarebox-editor-aliases" \
+			"$HOME/.squarebox-tui-aliases" \
+			"$HOME/.squarebox-sdk-paths"; do
+			[ -f "$src" ] || continue
+			echo "# --- from $(basename "$src") ---"
+			while IFS= read -r _sq_line; do
+				_squarebox_bash_line_to_fish "$_sq_line"
+			done < "$src"
+		done
+	} > "$sel_out" || return 1
+}
+
+install_fish() {
+	run_with_spinner "Installing Fish..." _install_fish_inner
+}
+
 case "$shell_choice" in
 	zsh)
 		if install_zsh; then
 			touch ~/.squarebox-use-zsh
+			rm -f ~/.squarebox-use-fish
 			echo "Zsh will take over at the end of this setup (next interactive shell)."
 		else
 			echo "Warning: Zsh installation failed; staying on bash."
+			rm -f ~/.squarebox-use-zsh ~/.squarebox-use-fish
+		fi
+		;;
+	fish)
+		if install_fish; then
+			touch ~/.squarebox-use-fish
 			rm -f ~/.squarebox-use-zsh
+			echo "Fish will take over at the end of this setup (next interactive shell)."
+		else
+			echo "Warning: Fish installation failed; staying on bash."
+			rm -f ~/.squarebox-use-zsh ~/.squarebox-use-fish
 		fi
 		;;
 	bash|*)
-		rm -f ~/.squarebox-use-zsh
+		rm -f ~/.squarebox-use-zsh ~/.squarebox-use-fish
 		;;
 esac
 fi # should_run shell

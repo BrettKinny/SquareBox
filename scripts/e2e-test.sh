@@ -170,9 +170,9 @@ suite_setup_editors() {
 	# install (apt zsh + Oh My Zsh + two plugin clones) is network-heavy and
 	# would significantly slow the CI suite, so it's not pre-seeded by default.
 	echo "bash" > /workspace/.squarebox/shell
-	# Ensure a stale marker from a previous run is cleared so the assertion
+	# Ensure stale markers from a previous run are cleared so the assertion
 	# below reflects the current selection, not leftover state.
-	rm -f ~/.squarebox-use-zsh
+	rm -f ~/.squarebox-use-zsh ~/.squarebox-use-fish
 
 	# Pre-configure git identity
 	git config --global user.name "E2E Test" 2>/dev/null || true

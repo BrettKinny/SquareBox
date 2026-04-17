@@ -179,7 +179,9 @@ Installed during first-run setup. Choose either, both, or neither:
 ### Shell (Experimental)
 
 By default, squarebox uses Bash. During first-run setup you can opt in to
-**Zsh** instead, which installs:
+**Zsh** or **Fish** instead.
+
+**Zsh** installs:
 
 | Name | Description |
 |------|-------------|
@@ -191,12 +193,21 @@ By default, squarebox uses Bash. During first-run setup you can opt in to
 The generated `~/.zshrc` mirrors the default bashrc — same aliases, starship
 prompt, zoxide, and AI/editor/SDK sourcing — layered on top of Oh My Zsh.
 
-> **Experimental:** the marker file `~/.squarebox-use-zsh` causes `~/.bashrc`
-> to `exec zsh -l` on every interactive login, so the next shell start picks
-> up the new shell. Set `SQUAREBOX_NO_ZSH=1` to force bash for a single
+**Fish** installs [fish](https://fishshell.com) (via apt), which ships with
+autosuggestions and syntax highlighting built in. The generated
+`~/.config/fish/config.fish` mirrors the default bashrc in fish-native syntax;
+AI/editor/TUI/SDK selections are translated from their bash files into
+`~/.config/fish/conf.d/squarebox-selections.fish` at setup time.
+
+> **Experimental:** the marker file `~/.squarebox-use-zsh` (or
+> `~/.squarebox-use-fish`) causes `~/.bashrc` to `exec` the chosen shell on
+> every interactive login, so the next shell start picks up the new shell.
+> Set `SQUAREBOX_NO_ZSH=1` or `SQUAREBOX_NO_FISH=1` to force bash for a single
 > session, or re-run `sqrbx-setup shell` to switch back permanently. Tooling
-> is primarily tested against bash, so a few edge cases (custom alias files,
-> rebuilds) may need polish — please file an issue if you hit one.
+> is primarily tested against bash, so a few edge cases may need polish —
+> please file an issue if you hit one. Known fish limitation: nvm (Node.js)
+> is not wired into fish; install [nvm.fish](https://github.com/jorgebucaran/nvm.fish)
+> separately if you need it.
 
 ### SDKs
 
