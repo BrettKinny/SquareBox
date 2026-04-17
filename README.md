@@ -6,7 +6,7 @@
 multiple platforms and devices.*
 
 **squarebox** packages a complete terminal-based development environment
-into a single container (Docker or Podman): modern CLI tools, AI coding
+into a single container (Docker; Podman experimental): modern CLI tools, AI coding
 assistants, language SDKs, and an opinionated set of shell aliases. Run the
 same box anywhere (desktop, VPS, or Codespace) and SSH in from your laptop,
 tablet, or phone (please don't).
@@ -27,10 +27,9 @@ The installer auto-detects which runtime is available. If both are installed, it
 asks which to use. Override with `SQUAREBOX_RUNTIME=docker` or
 `SQUAREBOX_RUNTIME=podman`.
 
-> **Podman (Experimental):** Podman support is experimental. Docker is the
-> primary tested runtime; Podman works but may have rough edges around volume
-> mounts, SSH agent forwarding, or rebuild flows — please file an issue if you
-> hit one.
+> **Podman (Experimental):** Docker is the primary tested runtime; Podman may
+> have rough edges around volume mounts, SSH agent forwarding, or rebuild
+> flows — please file an issue if you hit one.
 
 ### Don't have Docker or Podman? One-line install
 
