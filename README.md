@@ -72,9 +72,7 @@ assistant, and language SDKs.
 
 Stable installs the latest tagged release (pre-release tags like `-rc` are skipped). Edge uses the latest commit on main.
 
-If the install fails or you want to see the full docker build and git output, re-run with `--verbose`:
-
-    curl -fsSL https://raw.githubusercontent.com/SquareWaveSystems/squarebox/main/install.sh | bash -s -- --verbose
+If the install fails or you want to see the full docker build and git output, re-run with `--verbose`.
 
 **Windows (PowerShell 7+)**
 
