@@ -77,7 +77,7 @@ scripts/update-versions.sh
 sqrbx-update
 ```
 
-`scripts/update-versions.sh` only touches the Dockerfile tier (delta, yq, xh, glow, gum, starship). It fetches latest GitHub releases, downloads artifacts for both architectures, computes SHA256 checksums, and updates `checksums.txt` and the Dockerfile ARGs.
+`scripts/update-versions.sh` only touches the Dockerfile tier (delta, yq, xh, glow, gum, starship, just, difftastic). It fetches latest GitHub releases, downloads artifacts for both architectures, computes SHA256 checksums, and updates `checksums.txt` and the Dockerfile ARGs.
 
 Optional tools installed by `setup.sh` (opencode, editors, TUIs, zellij, Go, nvm) are not pinned. They install the latest upstream release at setup time, so there is no checksum file or version variable to update in the repo.
 

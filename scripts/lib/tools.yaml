@@ -73,6 +73,26 @@ tools:
     dest: system
     group: dockerfile
 
+  just:
+    repo: casey/just
+    version_prefix: ""
+    artifact: just-{version}-{zarch}-unknown-linux-musl.tar.gz
+    method: tar.gz
+    binaries: just
+    tar_extract: just
+    dest: system
+    group: dockerfile
+
+  difftastic:
+    repo: Wilfred/difftastic
+    version_prefix: ""
+    artifact: difft-{zarch}-unknown-linux-gnu.tar.gz
+    method: tar.gz
+    binaries: difft
+    tar_extract: difft
+    dest: system
+    group: dockerfile
+
   # ── setup.sh tools (installed as user to ~/.local/bin) ──────────────
 
   lazygit:

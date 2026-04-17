@@ -20,3 +20,9 @@ ab12a703cc6efd06caf24860344a2e8bc2518055fdd986f98eb761c47917ef3d  glow_2.1.1_Lin
 # Gum 0.17.0
 69ee169bd6387331928864e94d47ed01ef649fbfe875baed1bbf27b5377a6fdb  gum_0.17.0_Linux_x86_64.tar.gz
 b0b9ed95cbf7c8b7073f17b9591811f5c001e33c7cfd066ca83ce8a07c576f9c  gum_0.17.0_Linux_arm64.tar.gz
+# Just 1.49.0
+05eb2f068b641b06e5b318796c2e27d4dcca608e65b34329a08c1b9f582611bd  just-1.49.0-x86_64-unknown-linux-musl.tar.gz
+993b78f51004248114af22368f69715541542b3c9941c80e02f8ae10eb404ae0  just-1.49.0-aarch64-unknown-linux-musl.tar.gz
+# Difftastic 0.68.0
+f50c2d77f44a551fe24a7abfa955fbb893e6d0ab2a3767f39ca3823f0995dabd  difft-x86_64-unknown-linux-gnu.tar.gz
+faadfb3a88c194033449092fad3a86f1179738a0b3bfc44580c83473bdb17451  difft-aarch64-unknown-linux-gnu.tar.gz

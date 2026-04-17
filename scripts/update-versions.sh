@@ -106,6 +106,8 @@ update_arg XH_VERSION "${VERSIONS[xh]}"
 update_arg STARSHIP_VERSION "${VERSIONS[starship]}"
 update_arg GLOW_VERSION "${VERSIONS[glow]}"
 update_arg GUM_VERSION "${VERSIONS[gum]}"
+update_arg JUST_VERSION "${VERSIONS[just]}"
+update_arg DIFFTASTIC_VERSION "${VERSIONS[difftastic]}"
 
 echo
 echo "Done. Review changes with: git diff"

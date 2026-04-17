@@ -46,9 +46,9 @@ at each layer:
 |-------|---------------|-----------|-----------------|-----------------|
 | **install.sh** | Git repo from GitHub | HTTPS | Git transport verification | Tracks `main` branch |
 | **Dockerfile APT packages** | Ubuntu 24.04 packages, GitHub CLI, Eza | HTTPS | APT GPG signatures | Distro versions (not pinned) |
-| **Dockerfile binary tools** | 6 tools from GitHub Releases (delta, yq, xh, glow, gum, starship) | HTTPS | SHA256 checksum, build fails on mismatch | Yes, all pinned |
+| **Dockerfile binary tools** | 8 tools from GitHub Releases (delta, yq, xh, glow, gum, starship, just, difftastic) | HTTPS | SHA256 checksum, build fails on mismatch | Yes, all pinned |
 | **setup.sh optional tools** | OpenCode, nvm, Go, editors (micro, edit, fresh, nvim), TUIs (lazygit, gh-dash, yazi), zellij | HTTPS | None beyond transport | No, latest upstream at install time |
-| **sqrbx-update (Dockerfile tier)** | delta, yq, xh, glow, gum, starship | HTTPS | SHA256 checksum fetched from repo, update refused on mismatch or missing checksum | Only vetted versions |
+| **sqrbx-update (Dockerfile tier)** | delta, yq, xh, glow, gum, starship, just, difftastic | HTTPS | SHA256 checksum fetched from repo, update refused on mismatch or missing checksum | Only vetted versions |
 | **sqrbx-update (optional tier)** | Optional tools listed above | HTTPS | None beyond transport | Latest upstream |
 | **setup.sh third-party installers** | Claude Code, uv, .NET, rustup | HTTPS | Delegates to vendor installer | No (latest/LTS) |
 

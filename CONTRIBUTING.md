@@ -35,7 +35,7 @@ To run a quick local smoke test:
 ```bash
 docker build -t squarebox:test .
 docker run --rm squarebox:test bash -c '
-  for cmd in bat curl delta eza fd fzf gh glow gum jq nano rg starship xh yq zoxide; do
+  for cmd in bat curl delta difft eza fd fzf gh glow gum jq just nano rg starship xh yq zoxide; do
     which "$cmd" || { echo "MISSING: $cmd"; exit 1; }
   done
   echo "All tools present"
@@ -65,7 +65,7 @@ docker run --rm squarebox:test bash -c '
 
 ### Adding or updating a tool
 
-Dockerfile-tier tools (delta, yq, xh, glow, gum, starship) are pinned via
+Dockerfile-tier tools (delta, yq, xh, glow, gum, starship, just, difftastic) are pinned via
 `ARG` directives and verified against `checksums.txt`. To bump them:
 
 1. Run `./scripts/update-versions.sh` to fetch latest versions and checksums

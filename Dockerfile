@@ -39,14 +39,18 @@ ARG XH_VERSION=0.25.3
 ARG STARSHIP_VERSION=1.24.2
 ARG GLOW_VERSION=2.1.1
 ARG GUM_VERSION=0.17.0
+ARG JUST_VERSION=1.49.0
+ARG DIFFTASTIC_VERSION=0.68.0
 
 # Validate version ARGs are non-empty
-RUN test -n "$DELTA_VERSION"    || { echo "Error: DELTA_VERSION is empty" >&2; exit 1; } \
- && test -n "$YQ_VERSION"       || { echo "Error: YQ_VERSION is empty" >&2; exit 1; } \
- && test -n "$XH_VERSION"       || { echo "Error: XH_VERSION is empty" >&2; exit 1; } \
- && test -n "$STARSHIP_VERSION" || { echo "Error: STARSHIP_VERSION is empty" >&2; exit 1; } \
- && test -n "$GLOW_VERSION"     || { echo "Error: GLOW_VERSION is empty" >&2; exit 1; } \
- && test -n "$GUM_VERSION"      || { echo "Error: GUM_VERSION is empty" >&2; exit 1; }
+RUN test -n "$DELTA_VERSION"       || { echo "Error: DELTA_VERSION is empty" >&2; exit 1; } \
+ && test -n "$YQ_VERSION"          || { echo "Error: YQ_VERSION is empty" >&2; exit 1; } \
+ && test -n "$XH_VERSION"          || { echo "Error: XH_VERSION is empty" >&2; exit 1; } \
+ && test -n "$STARSHIP_VERSION"    || { echo "Error: STARSHIP_VERSION is empty" >&2; exit 1; } \
+ && test -n "$GLOW_VERSION"        || { echo "Error: GLOW_VERSION is empty" >&2; exit 1; } \
+ && test -n "$GUM_VERSION"         || { echo "Error: GUM_VERSION is empty" >&2; exit 1; } \
+ && test -n "$JUST_VERSION"        || { echo "Error: JUST_VERSION is empty" >&2; exit 1; } \
+ && test -n "$DIFFTASTIC_VERSION"  || { echo "Error: DIFFTASTIC_VERSION is empty" >&2; exit 1; }
 
 # Checksum verification infrastructure
 COPY checksums.txt /tmp/checksums.txt
@@ -87,6 +91,8 @@ RUN . /tmp/sb-init.sh && sb_install xh "$XH_VERSION"
 RUN . /tmp/sb-init.sh && sb_install glow "$GLOW_VERSION"
 RUN . /tmp/sb-init.sh && sb_install gum "$GUM_VERSION"
 RUN . /tmp/sb-init.sh && sb_install starship "$STARSHIP_VERSION"
+RUN . /tmp/sb-init.sh && sb_install just "$JUST_VERSION"
+RUN . /tmp/sb-init.sh && sb_install difftastic "$DIFFTASTIC_VERSION"
 
 # Clean up build-time files
 RUN rm -f /tmp/checksums.txt /tmp/tools.yaml /tmp/tool-lib.sh /tmp/sb-init.sh

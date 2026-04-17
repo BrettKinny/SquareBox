@@ -4,10 +4,6 @@
 
 Items are listed in priority order.
 
-- **just** — add [just](https://github.com/casey/just) (modern task runner) to the default image; single binary, zero dependencies, gives users a standard way to define project commands
-- **lazydocker** — add [lazydocker](https://github.com/jesseduffield/lazydocker) (Docker management TUI) to the default image; same author as lazygit, completes the TUI tool suite for developers managing containers
-- **difftastic** — add [difftastic](https://github.com/Wilfred/difftastic) (syntax-aware structural diffs) to the default image; complements delta with language-aware diffing
-- **btop** — add [btop](https://github.com/aristocratos/btop) (system resource monitor TUI) to the default image; fills the "what's eating my CPU/memory" gap without requiring manual package installation
 - **direnv** — add [direnv](https://github.com/direnv/direnv) (automatic per-directory environment loading) to the default image; auto-loads `.envrc` files on `cd`, integrates with zoxide for seamless per-project environment variables
 - **Dotfile portability** — let users mount or bootstrap their own dotfiles (starship.toml, tmux.conf, aliases, etc.) via a `~/.squarebox/` convention, with sensible merge/override behaviour against the defaults
 - **MCP server pre-configuration** — ship ready-made MCP server configs (filesystem, GitHub, etc.) as part of the AI assistant setup step
@@ -20,5 +16,7 @@ Items are listed in priority order.
 - **Network firewall / sandboxing mode** — optional network-level isolation (iptables/seccomp) so AI agents can only reach approved endpoints, inspired by trailofbits and clampdown
 - **Multiple concurrent container instances** — support running more than one squarebox container simultaneously
 - **Multi-agent workflow orchestration** — explore adding a layer to run multiple AI coding agents simultaneously in isolated contexts (git worktrees + tmux sessions), inspired by agent-of-empires; may be better to integrate an existing tool than build from scratch
+- ~~**just**~~ — ✅ done: [just](https://github.com/casey/just) pinned in the Dockerfile tier with SHA256 checksums
+- ~~**difftastic**~~ — ✅ done: [difftastic](https://github.com/Wilfred/difftastic) (`difft`) pinned in the Dockerfile tier with SHA256 checksums
 - ~~**Podman compatibility**~~ — ✅ done: install scripts auto-detect Docker or Podman and skip UID chown logic for Podman's rootless user namespace mapping
 - ~~**Zsh option**~~ — ✅ done (experimental): `setup.sh` now offers Zsh with Oh My Zsh, autosuggestions, and syntax highlighting as a selectable shell alongside the Bash default; opt in via the new `shell` setup section
